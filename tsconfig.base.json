@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@growchief/frontend/*": ["apps/frontend/src/*"],
+      "@growchief/backend/*": ["apps/backend/src/*"],
+      "@growchief/orchestrator/*": ["apps/orchestrator/src/*"],
+      "@growchief/workers/*": ["apps/workers/src/*"],
+      "@growchief/cron/*": ["apps/cron/src/*"],
+      "@growchief/shared-backend/*": ["shared/server/*"],
+      "@growchief/shared-both/*": ["shared/both/*"]
+    }
+  },
+  "references": [
+    {
+      "path": "./shared/server"
+    },
+    {
+      "path": "./shared/both"
+    }
+  ],
+  "exclude": ["node_modules", "tmp"]
+}

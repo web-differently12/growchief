@@ -1,0 +1,14 @@
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "description": "",
+  "author": "Nevo David",
+  "private": false,
+  "license": "AGPL-3.0",
+  "scripts": {
+    "build": "dotenv -e ../../.env -- nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "dotenv -e ../../.env -- nest start",
+    "dev": "dotenv -e ../../.env -- nest start --watch"
+  }
+}

@@ -1,0 +1,316 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String             @id @default(uuid())
+  email         String
+  password      String?
+  providerName  Provider
+  name          String?
+  lastName      String?
+  isSuperAdmin  Boolean            @default(false)
+  providerId    String?
+  organizations UserOrganization[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  activated     Boolean            @default(true)
+  notifications Notification[]
+
+  @@unique([email, providerName])
+  @@index([providerId])
+  @@index([createdAt])
+  @@index([activated])
+}
+
+model Organization {
+  id                String              @id @default(uuid())
+  users             UserOrganization[]
+  allowTrial        Boolean             @default(true)
+  companyName       String              @default("")
+  subscription      Subscription?
+  paymentId         String?
+  invites           Invites[]
+  botGroups         BotGroup[]
+  bots              Bot[]
+  apiKey            String?             @default(uuid())
+  workflows         Workflows[]
+  nodes             WorkflowNodes[]
+  leadOrganizations LeadsOrganization[]
+  activities        Activity[]
+  proxies           Proxy[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserOrganization {
+  id             String       @id @default(uuid())
+  user           User         @relation(fields: [userId], references: [id])
+  userId         String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  disabled       Boolean      @default(false)
+  role           Role         @default(USER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  @@unique([userId, organizationId])
+  @@index([disabled])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model Subscription {
+  id             String       @id @default(uuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  identifier     String
+  total          Int          @default(1)
+  interval       Interval
+  cancel_at      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model Invites {
+  id             String       @id @default(uuid())
+  email          String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  role           Role
+  status         InviteStatus
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  @@unique([email, organizationId])
+  @@index([email])
+  @@index([organizationId])
+  @@index([deletedAt])
+}
+
+model Notification {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  title          String
+  content        String
+  additionalInfo String?
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([read])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model BotGroup {
+  id             String       @id @default(uuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  active         Boolean      @default(true)
+  bots           Bot[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  @@index([organizationId])
+  @@index([active])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model Bot {
+  id             String         @id @default(uuid())
+  name           String
+  platform       String
+  storage        String?
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  botGroupId     String
+  botGroup       BotGroup       @relation(fields: [botGroupId], references: [id])
+  logged         Boolean        @default(true)
+  status         Status         @default(ACTIVE)
+  settings       String?
+  currentJobTime DateTime       @default(now())
+  profilePicture String?
+  internalId     String
+  timezone       Int            @default(0)
+  workingHours   String         @default("[[540,1020],[540,1020],[540,1020],[540,1020],[540,960],[],[]]")
+  proxyId        String?
+  proxy          Proxy?         @relation(fields: [proxyId], references: [id])
+  restrictions   Restrictions[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([organizationId, platform, internalId])
+  @@index([platform])
+  @@index([organizationId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model Workflows {
+  id             String              @id @default(uuid())
+  name           String
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id])
+  active         Boolean             @default(false)
+  nodes          WorkflowNodes[]
+  leads          LeadsOrganization[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  deletedAt      DateTime?
+
+  @@index([organizationId])
+  @@index([active])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model WorkflowNodes {
+  id             String          @unique @default(uuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  workflowId     String
+  workflow       Workflows       @relation(fields: [workflowId], references: [id])
+  type           String
+  position       String
+  data           String?
+  parentId       String?
+  parent         WorkflowNodes?  @relation("ParentNode", fields: [parentId], references: [id])
+  children       WorkflowNodes[] @relation("ParentNode")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+
+  @@id([id, organizationId, workflowId])
+  @@index([workflowId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model LeadsOrganization {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  leadId         String
+  lead           Leads        @relation(fields: [leadId], references: [id])
+  workflowId     String?
+  workflow       Workflows?   @relation(fields: [workflowId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, leadId, workflowId])
+  @@index([createdAt])
+}
+
+model Leads {
+  id                String              @id @default(uuid())
+  firstName         String?
+  lastName          String?
+  email             String?
+  organization_name String?
+  phone             String?
+  status            String?
+  platform          String
+  url               String
+  picture           String?
+  organization      LeadsOrganization[]
+  activities        Activity[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([platform, url])
+  @@index([createdAt])
+}
+
+model Activity {
+  id             String       @id @default(uuid())
+  leadId         String
+  lead           Leads        @relation(fields: [leadId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  type           String
+  createdAt      DateTime     @db.Date @default(now())
+  botId          String
+  stepId         String
+  workflowId     String
+
+  @@index([leadId, organizationId, type])
+  @@unique([leadId, organizationId, type, botId, stepId, workflowId])
+}
+
+model Proxy {
+  id             String       @id @default(uuid())
+  ip             String
+  data           String
+  provider       String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  username       String
+  password       String
+  country        String
+  server         String
+  bots           Bot[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organizationId])
+  @@index([provider])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model Restrictions {
+  id         String   @id @default(uuid())
+  methodName String
+  until      DateTime
+  botId      String
+  bot        Bot      @relation(fields: [botId], references: [id])
+
+  @@index([botId, until])
+}
+
+enum InviteStatus {
+  PENDING
+  REJECTED
+  ACCEPTED
+}
+
+enum Interval {
+  month
+  year
+}
+
+enum Provider {
+  LOCAL
+  GOOGLE
+  GITHUB
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN
+  USER
+}
+
+enum Status {
+  ACTIVE
+  PAUSED
+}

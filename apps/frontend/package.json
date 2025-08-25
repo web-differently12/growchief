@@ -1,0 +1,12 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- vite",
+    "build": "dotenv -e ../../.env -- tsc -b && vite build",
+    "lint": "eslint",
+    "preview": "dotenv -e ../../.env -- tsc -b && vite preview"
+  }
+}

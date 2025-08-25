@@ -1,0 +1,16 @@
+{
+  "name": "orchestrator",
+  "version": "0.0.1",
+  "description": "",
+  "author": "Nevo David",
+  "private": false,
+  "license": "AGPL-3.0",
+  "scripts": {
+    "build": "dotenv -e ../../.env -- nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "dotenv -e ../../.env -- node ./dist/apps/orchestrator/src/main.js",
+    "start-pm2": "dotenv -e ../../.env -- xvfb-run -a node ./dist/apps/orchestrator/src/main.js",
+    "dev": "nodemon --config ./nodemon.json",
+    "pm2": "pm2 start pnpm --name orchestrator -- start-pm2"
+  }
+}

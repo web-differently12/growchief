@@ -1,0 +1,7 @@
+{
+  "watch": ["src/**", "../../shared/**"],
+  "ext": "ts",
+  "ignore": ["dist"],
+  "exec": "dotenv -e ../../.env -- nest start",
+  "delay": 100
+}

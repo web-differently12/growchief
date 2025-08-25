@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0e0e0e;
+  --innerbackground: #1a1919;
+  --innerbackgroundHover: #282727;
+  --text-primary: #fff;
+  --text-secondary: #a3a3a3;
+  --menu: #fff;
+  --text-menu: #0e0e0e;
+  --btn-primary: #612bd3;
+  --new-box-hover: #201f1f;
+  --popup-color: rgba(65, 64, 66, 0.3);
+  --toaster-color: #313030;
+  --input-border: #2c2b2b;
+  --node-color: #2c2b2b;
+  --node-top: #612bd3;
+  --menu-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.5);
+}
+
+.light {
+  --background: #f0f2f4;
+  --innerbackground: #fff;
+  --innerbackgroundHover: #e9e9ec;
+  --text-primary: #0e0e0e;
+  --text-secondary: #92969a;
+  --menu: #e8e5fc;
+  --text-menu: #3a01b2;
+  --new-box-hover: #f4f6f8;
+  --popup-color: rgba(55, 37, 97, 0.2);
+  --toaster-color: #eceef1;
+  --input-border: #eaecee;
+  --node-color: #eff1f3;
+  --menu-shadow:
+    -22px 83px 24px 0 rgba(55, 52, 75, 0),
+    -14px 53px 22px 0 rgba(55, 52, 75, 0.01),
+    -8px 30px 19px 0 rgba(55, 52, 75, 0.05),
+    -3px 13px 14px 0 rgba(55, 52, 75, 0.09),
+    -1px 3px 8px 0 rgba(55, 52, 75, 0.1);
+}
+
+@theme inline {
+  --color-menu: var(--menu);
+  --color-text-menu: var(--text-menu);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-background: var(--background);
+  --color-innerBackground: var(--innerbackground);
+  --color-innerBackgroundHover: var(--innerbackgroundHover);
+  --color-btn-primary: var(--btn-primary);
+  --color-boxHover: var(--new-box-hover);
+  --color-popup: var(--popup-color);
+  --color-toaster: var(--toaster-color);
+  --color-input-border: var(--input-border);
+  --color-node: var(--node-color);
+  --color-node-top: var(--node-top);
+  --animate-fadeIn: fadeIn 0.2s ease-in-out forwards;
+  --animate-from-right: fromRight 0.5s ease-in-out forwards;
+  --animate-to-right: toRight 0.5s ease-in-out forwards;
+  --animate-fadeDown: fadeDown 4s ease-in-out forwards;
+  --shadow-menu: var(--menu-shadow);
+}
+
+body,
+#root {
+  background: var(--background);
+  min-height: 100vh;
+  color: var(--text-primary);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-weight: 500;
+}
+
+#root {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes fromRight {
+  0% {
+    opacity: 0;
+    width: 0;
+  }
+  100% {
+    opacity: 1;
+    width: 300px;
+  }
+}
+
+@keyframes fadeDown {
+  0% {
+    opacity: 0;
+    margin-top: -30px;
+  }
+  10% {
+    opacity: 1;
+    margin-top: 0;
+  }
+  85% {
+    opacity: 1;
+    margin-top: 0;
+  }
+  90% {
+    opacity: 1;
+    margin-top: 10px;
+  }
+  100% {
+    opacity: 0;
+    margin-top: -30px;
+  }
+}
+
+@keyframes toRight {
+  0% {
+    opacity: 1;
+    width: 300px;
+  }
+  100% {
+    opacity: 0;
+    width: 0;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fixBlur {
+  -webkit-backface-visibility: hidden;
+  -webkit-transform: translateZ(0) scale(1, 1);
+  transform: translateZ(0);
+}
+
+.shadow-login {
+  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.5);
+}
+
+.logo-shadow {
+  box-shadow:
+    -39.947px -39.947px 84.737px 0 rgba(255, 94, 0, 0.24),
+    -0.605px -0.605px 2.421px 0 rgba(255, 255, 255, 0.5),
+    1.211px 1.211px 1.211px 0 rgba(255, 255, 255, 0.1),
+    -2.421px -2.421px 7.263px 0 rgba(255, 94, 0, 0.32),
+    2.421px 2.421px 7.263px 0 rgba(25, 44, 221, 0.5);
+}
+
+.react-flow__node-default,
+.react-flow__node-api {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
+  width: auto !important;
+  padding: 0 !important;
+}
+
+.disable-button {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.block-all {
+  display: none;
+}
+
+.behind .highlight {
+  background: var(--color-btn-primary);
+}
+
+.above .highlight {
+  color: white;
+}
