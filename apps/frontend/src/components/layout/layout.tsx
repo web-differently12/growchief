@@ -16,6 +16,7 @@ import { JoinTeamModal } from "@growchief/frontend/components/team/join.team.mod
 import { OrganizationSelector } from "@growchief/frontend/components/layout/organization.selector.tsx";
 import { ModalManager } from "@growchief/frontend/utils/modal.manager";
 import { NotificationsComponent } from "@growchief/frontend/components/notifications/notifications.component.tsx";
+import { CheckSubscription } from "@growchief/frontend/components/layout/check.subscription.tsx";
 
 export const Layout: FC = () => {
   const fetch = useFetch();
@@ -57,16 +58,19 @@ export const Layout: FC = () => {
   if (!user.org.subscription && !user.selfhosted) {
     return (
       <>
-        <JoinTeamModal />
-        <Routes>
-          {memoRoutes.routes
-            .filter((f) => f.label === "Billing")
-            .map((route) => (
-              <Fragment key={route.label}>
-                <Route {...route} path="*" />
-              </Fragment>
-            ))}
-        </Routes>
+        <CheckSubscription />
+        <div className="blurMe">
+          <JoinTeamModal />
+          <Routes>
+            {memoRoutes.routes
+              .filter((f) => f.label === "Billing")
+              .map((route) => (
+                <Fragment key={route.label}>
+                  <Route {...route} path="*" />
+                </Fragment>
+              ))}
+          </Routes>
+        </div>
       </>
     );
   }
@@ -128,7 +132,10 @@ export const Layout: FC = () => {
               </div>
             </div>
             <Routes>
-              <Route path="/auth/*" element={<Navigate to="/analytics" replace />} />
+              <Route
+                path="/auth/*"
+                element={<Navigate to="/analytics" replace />}
+              />
               <Route path="/" element={<Navigate to="/analytics" replace />} />
               {memoRoutes.routes.map((route) => (
                 <Route
