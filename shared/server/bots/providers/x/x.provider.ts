@@ -216,7 +216,7 @@ export class XProvider extends BotAbstract {
     allowedBeforeIdentifiers: [],
     notAllowedBeforeIdentifiers: [],
     description: 'Delay the account for a specified time',
-    notAllowedBeforeIdentifier: ['add-account', 'delay'],
+    notAllowedBeforeIdentifier: ['delay'],
     maxChildren: 1,
   })
   async delayAccount(params: ParamsValue) {
