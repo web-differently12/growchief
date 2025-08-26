@@ -66,10 +66,7 @@ export class WorkingHoursManager {
         const sleepStartTime = Date.now();
         this.workingHoursSleepStartTime = sleepStartTime; // Track for signal handler
 
-        await Promise.race([
-          condition(() => this.shouldRefetchWorkingHours),
-          sleep(sleepTime),
-        ]);
+        await condition(() => this.shouldRefetchWorkingHours, sleepTime);
 
         // Calculate actual sleep time (might be less if interrupted by signal)
         const actualSleepTime = Date.now() - sleepStartTime;

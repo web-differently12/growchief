@@ -155,10 +155,10 @@ export async function userWorkflowThrottler({
         const currentTime = Date.now();
         const sleepDuration = Math.max(0, restrictionEndTime - currentTime);
 
-        await Promise.race([
-          condition(() => q.some((f) => f.functionName !== job.functionName)),
-          sleep(sleepDuration),
-        ]);
+        await condition(
+          () => q.some((f) => f.functionName !== job.functionName),
+          sleepDuration,
+        );
       } else {
         // if there are other types of jobs, we move this job to the end of the queue
         await lock.runExclusive(async () => {
