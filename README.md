@@ -28,12 +28,6 @@
 </div>
 
 <p align="center">
-  <br />
-  <a href="https://docs.growchief.com" rel="dofollow"><strong>Explore the docs »</strong></a>
-  <br />
-</p>
-
-<p align="center">
   <a href="https://platform.growchief.com">Register</a>
   ·
   <a href="https://discord.growchief.com">Join Our Discord (devs only)</a>
