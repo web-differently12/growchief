@@ -1,4 +1,9 @@
-import { condition, setHandler, proxyActivities } from '@temporalio/workflow';
+import {
+  condition,
+  setHandler,
+  proxyActivities,
+  sleep,
+} from '@temporalio/workflow';
 import {
   getTimeUntilWorkingHours,
   isWithinWorkingHours,
@@ -61,18 +66,10 @@ export class WorkingHoursManager {
         const sleepStartTime = Date.now();
         this.workingHoursSleepStartTime = sleepStartTime; // Track for signal handler
 
-        // Use condition-based waiting that can be interrupted by working hours updates
-        const sleepEndTime = Date.now() + sleepTime;
-
-        await condition(() => {
-          // Wake up if working hours were updated
-          if (this.shouldRefetchWorkingHours) {
-            return true;
-          }
-
-          // Wake up if sleep time has elapsed
-          return Date.now() >= sleepEndTime;
-        });
+        await Promise.race([
+          condition(() => this.shouldRefetchWorkingHours),
+          sleep(sleepTime),
+        ]);
 
         // Calculate actual sleep time (might be less if interrupted by signal)
         const actualSleepTime = Date.now() - sleepStartTime;
