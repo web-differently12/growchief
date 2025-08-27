@@ -30,6 +30,8 @@ services:
         condition: service_healthy
       namespace-init:
         condition: service_healthy
+      temporal:
+        condition: service_healthy
 
   growchief-postgres:
     image: postgres:16
@@ -107,6 +109,11 @@ services:
       - 7233
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7233"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   temporal-admin-tools:
     container_name: temporal-admin-tools
