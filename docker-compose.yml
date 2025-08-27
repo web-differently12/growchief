@@ -99,6 +99,7 @@ services:
       - ES_VERSION=v7
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
+      - SKIP_DEFAULT_NAMESPACE_CREATION=false
     networks:
       - temporal-network
     expose:
