@@ -28,10 +28,6 @@ services:
     depends_on:
       growchief-postgres:
         condition: service_healthy
-      temporal:
-        condition: service_started
-      temporal-admin-tools:
-        condition: service_started
 
   growchief-postgres:
     image: postgres:16
@@ -103,8 +99,6 @@ services:
       - ES_VERSION=v7
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
-      - DEFAULT_NAMESPACE=default
-      - DEFAULT_NAMESPACE_RETENTION=72h
     networks:
       - temporal-network
     expose:
