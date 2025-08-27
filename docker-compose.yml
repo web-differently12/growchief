@@ -119,7 +119,8 @@ services:
     container_name: temporal-admin-tools
     image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
     depends_on:
-      - temporal
+      temporal:
+        condition: service_healthy
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
@@ -129,13 +130,14 @@ services:
     tty: true
 
   namespace-init:
-    image: curlimages/curl:latest
+    image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
     depends_on:
       - temporal-admin-tools
     entrypoint: >
       /bin/sh -c "
-      sleep 15;
-      docker exec temporal-admin-tools tctl namespace register --namespace default --description 'Default namespace' --rd 1 || true
+      sleep 10;
+      tctl --address temporal:7233 namespace describe --namespace default || \
+      tctl --address temporal:7233 namespace register --namespace default --description 'Default namespace' --rd 1
       "
     healthcheck:
       test: [ "CMD", "tctl", "namespace", "describe", "--namespace", "default" ]
@@ -147,7 +149,8 @@ services:
     container_name: temporal-ui
     image: temporalio/ui:2.34.0
     depends_on:
-      - temporal
+      temporal:
+        condition: service_healthy
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CORS_ORIGINS=http://localhost:3000
