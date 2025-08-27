@@ -15,7 +15,6 @@ services:
       GOOGLE_CLIENT_ID: "For Login With Google Client ID"
       GOOGLE_CLIENT_SECRET: "For Login With Google Client Secret"
       TEMPORAL_ADDRESS: "temporal:7233"
-      TEMPORAL_NAMESPACE: "default"
       APOLLO_API_KEY: ""
       DATAGMA_API_KEY: ""
     volumes:
@@ -29,10 +28,6 @@ services:
     depends_on:
       growchief-postgres:
         condition: service_healthy
-      temporal:
-        condition: service_started
-      temporal-admin-tools:
-        condition: service_started
 
   growchief-postgres:
     image: postgres:16
@@ -71,7 +66,7 @@ services:
     expose:
       - 9200
     volumes:
-      - temporal-es-data:/var/lib/elasticsearch/data
+      - /var/lib/elasticsearch/data
 
   temporal-postgresql:
     container_name: temporal-postgresql
@@ -84,7 +79,7 @@ services:
     expose:
       - 5432
     volumes:
-      - temporal-postgres-data:/var/lib/postgresql/data
+      - /var/lib/postgresql/data
 
   temporal:
     container_name: temporal
@@ -104,14 +99,12 @@ services:
       - ES_VERSION=v7
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
-      - DEFAULT_NAMESPACE=default
-      - DEFAULT_NAMESPACE_RETENTION=72h
     networks:
       - temporal-network
     expose:
       - 7233
     volumes:
-      - ./var/dynamicconfig:/etc/temporal/config/dynamicconfig
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
 
   temporal-admin-tools:
     container_name: temporal-admin-tools
@@ -125,18 +118,6 @@ services:
       - temporal-network
     stdin_open: true
     tty: true
-    entrypoint: |
-      sh -c "
-        echo 'Waiting for Temporal server to be ready...'
-        until tctl cluster health; do
-          echo 'Temporal server not ready, waiting 2 seconds...'
-          sleep 2
-        done
-        echo 'Temporal server is ready, creating default namespace...'
-        tctl --ns default namespace register --retention 72h || echo 'Namespace may already exist'
-        echo 'Namespace setup complete, keeping container running...'
-        tail -f /dev/null
-      "
 
   temporal-ui:
     container_name: temporal-ui
@@ -160,12 +141,6 @@ volumes:
   growchief-config:
     external: false
   growchief-uploads:
-    external: false
-  temporal-postgres-data:
-    external: false
-  temporal-es-data:
-    external: false
-  temporal-config:
     external: false
 
 # -----------------------
