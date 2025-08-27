@@ -2,20 +2,5 @@ limit.maxIDLength:
   - value: 255
     constraints: {}
 system.forceSearchAttributesCacheRefreshOnRead:
-  - value: false
-    constraints: {}
-frontend.grpcMaxCallRecvMsgSize:
-  - value: 134217728
-    constraints: {}
-frontend.grpcMaxCallSendMsgSize:
-  - value: 134217728
-    constraints: {}
-frontend.keepAliveMaxConnectionAge:
-  - value: 48h
-    constraints: {}
-system.rpcTimeout:
-  - value: "30s"
-    constraints: {}
-system.rpcLongPollTimeout:
-  - value: "20s"
+  - value: true # Dev setup only. Please don't turn this on in production.
     constraints: {}
