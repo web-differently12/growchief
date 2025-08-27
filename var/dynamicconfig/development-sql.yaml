@@ -10,6 +10,9 @@ frontend.grpcMaxCallRecvMsgSize:
 frontend.grpcMaxCallSendMsgSize:
   - value: 134217728
     constraints: {}
+frontend.keepAliveMaxConnectionAge:
+  - value: 48h
+    constraints: {}
 system.rpcTimeout:
   - value: "30s"
     constraints: {}
