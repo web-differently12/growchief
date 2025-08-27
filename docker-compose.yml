@@ -28,6 +28,10 @@ services:
     depends_on:
       growchief-postgres:
         condition: service_healthy
+      temporal:
+        condition: service_started
+      temporal-admin-tools:
+        condition: service_started
 
   growchief-postgres:
     image: postgres:16
@@ -99,7 +103,8 @@ services:
       - ES_VERSION=v7
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
-      - SKIP_DEFAULT_NAMESPACE_CREATION=false
+      - DEFAULT_NAMESPACE=default
+      - DEFAULT_NAMESPACE_RETENTION=72h
     networks:
       - temporal-network
     expose:
@@ -119,6 +124,18 @@ services:
       - temporal-network
     stdin_open: true
     tty: true
+    entrypoint: |
+      sh -c "
+        echo 'Waiting for Temporal server to be ready...'
+        until tctl cluster health; do
+          echo 'Temporal server not ready, waiting 2 seconds...'
+          sleep 2
+        done
+        echo 'Temporal server is ready, creating default namespace...'
+        tctl --ns default namespace register --retention 72h || echo 'Namespace may already exist'
+        echo 'Namespace setup complete, keeping container running...'
+        tail -f /dev/null
+      "
 
   temporal-ui:
     container_name: temporal-ui
