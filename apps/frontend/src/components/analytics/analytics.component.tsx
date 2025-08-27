@@ -513,7 +513,7 @@ export const AnalyticsComponent: FC = () => {
         />
 
         <MetricCard
-          title="Total Running Workflows"
+          title="Total Trigged Workflows With Leads"
           value={values?.workflows?.total || 0}
           data={values?.workflows?.items || []}
           color="#8B5CF6"
