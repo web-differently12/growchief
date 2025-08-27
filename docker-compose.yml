@@ -21,7 +21,7 @@ services:
       - growchief-config:/config/
       - growchief-uploads:/uploads/
     ports:
-      - 5002:5000
+      - "5002:5000"
     networks:
       - growchief-network
       - temporal-network
@@ -101,7 +101,7 @@ services:
       - TEMPORAL_CLI_ADDRESS=temporal:7233
     networks:
       - temporal-network
-    ports:
+    expose:
       - 7233
     volumes:
       - ./var/dynamicconfig:/etc/temporal/config/dynamicconfig
@@ -130,7 +130,7 @@ services:
     networks:
       - temporal-network
     ports:
-      - 8080:8080
+      - "8080:8080"
 
 # -----------------------
 # Volumes
