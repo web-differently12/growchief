@@ -101,8 +101,8 @@ services:
       - TEMPORAL_CLI_ADDRESS=temporal:7233
     networks:
       - temporal-network
-    expose:
-      - 7233
+    ports:
+      - "7233"
     volumes:
       - ./var/dynamicconfig:/etc/temporal/config/dynamicconfig
 
