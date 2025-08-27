@@ -28,6 +28,8 @@ services:
     depends_on:
       growchief-postgres:
         condition: service_healthy
+      namespace-init:
+        condition: service_healthy
 
   growchief-postgres:
     image: postgres:16
@@ -118,6 +120,21 @@ services:
       - temporal-network
     stdin_open: true
     tty: true
+
+  namespace-init:
+    image: curlimages/curl:latest
+    depends_on:
+      - temporal-admin-tools
+    entrypoint: >
+      /bin/sh -c "
+      sleep 15;
+      docker exec temporal-admin-tools tctl namespace register --namespace default --description 'Default namespace' --rd 1 || true
+      "
+    healthcheck:
+      test: [ "CMD", "tctl", "namespace", "describe", "--namespace", "default" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   temporal-ui:
     container_name: temporal-ui
