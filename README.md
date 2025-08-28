@@ -81,20 +81,9 @@ We do not encourage spam (perfect for API/n8n automations).
 * Prisma (Default to PostgreSQL)
 * Temporal (Orchestrator)
 
-## Installation
-Make sure you have docker and docker-compose installed.
-Simply clone the project
-```
-git clone https://github.com/growchief/growchief
-```
+## QuickStart / Installation
 
-And run
-
-```
-docker-compose up
-```
-
-For special configuration copy `.env.example` to `.env` and fill in the variables.
+View https://github.com/growchief/growchief/wiki/QuickStart
 
 ## Sponsorship
 
