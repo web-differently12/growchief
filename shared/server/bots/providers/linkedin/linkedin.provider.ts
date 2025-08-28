@@ -1,6 +1,7 @@
 import {
   BotAbstract,
   type ParamsValue,
+  RequireField,
   type RunEnrichment,
   type SpecialEvents,
 } from '@growchief/shared-backend/bots/bots.interface';
@@ -11,6 +12,7 @@ import { extractMyProfile } from '@growchief/shared-backend/bots/providers/linke
 import { extractConnectionTarget } from '@growchief/shared-backend/bots/providers/linkedin/extra.person.profile';
 import { compareTwoStrings } from 'string-similarity';
 import { ProgressResponse } from '@growchief/shared-backend/temporal/progress.response';
+import { uniqBy } from 'lodash';
 
 const list = [
   {
@@ -50,10 +52,86 @@ export class LinkedinProvider extends BotAbstract {
   headful = true;
   urlRegex = /https:\/\/www\.linkedin\.com\/in\/(.*)/;
   isWWW = true;
+  searchURL = {
+    description:
+      'LinkedIn Search: <a target="_blank" class="underline hover:font-bold" href="https://www.linkedin.com/search/results/people/?keywords=nevo&network=%5B%22S%22%5D&origin=FACETED_SEARCH&sid=d5!">example #1</a>',
+    regex: [/https:\/\/www\.linkedin\.com\/search\/results\/people\/.*/],
+  };
+
+  override async leadList(
+    params: ParamsValue,
+  ): Promise<RequireField<ProgressResponse, 'leads'>> {
+    const response = await params.cursor.page.waitForResponse(
+      /5ba32757c00b31aea747c8bebb92855c/gm,
+      {
+        timeout: 0,
+      },
+    );
+
+    const request = response.request();
+    const listParams = {
+      method: request.method(),
+      headers: request.headers(),
+      postData: request.postData(),
+    };
+
+    const url = request.url();
+    const loadLeads: {
+      picture: string;
+      url: string;
+      firstName: string;
+      lastName: string;
+      degree: number;
+      pending: boolean;
+    }[] = [];
+
+    for (const num of [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]) {
+      const newUrl = url.replace(/start:\d*/gm, `start:${num}`);
+      const list = await params.page.evaluate(
+        async ({ url, params }) => {
+          const data = await (await fetch(url, params)).json();
+          return (
+            (data?.included || [])
+              ?.filter((f: any) => f?.navigationUrl)
+              ?.map((f: any) => ({
+                picture:
+                  f?.image?.attributes?.[0]?.detailData.nonEntityProfilePicture
+                    ?.vectorImage?.artifacts?.[0]
+                    ?.fileIdentifyingUrlPathSegment || '',
+                url: f?.navigationUrl?.split('?')?.[0]?.split('#')?.[0],
+                firstName: f?.title?.text?.split(' ')?.[0] || '',
+                degree: 0,
+                pending: false,
+                lastName:
+                  f?.title?.text?.split(' ')?.slice(1)?.join(' ')?.trim() || '',
+              })) || []
+          );
+        },
+        { url: newUrl, params: listParams },
+      );
+
+      if (list.length === 0) {
+        break;
+      }
+
+      loadLeads.push(...list);
+      await timer(2000);
+    }
+
+    return {
+      delay: 0,
+      repeatJob: false,
+      endWorkflow: false,
+      leads: uniqBy(
+        loadLeads.filter((f) => f.url),
+        (p) => p.url,
+      ),
+    };
+  }
 
   async accountLimited(
     params: ParamsValue,
-  ): Promise<Required<ProgressResponse> | false> {
+  ): Promise<Omit<Required<ProgressResponse>, 'leads'> | false> {
     const body = await params.page.evaluate(
       () => document.querySelector('body')?.innerText || '',
     );

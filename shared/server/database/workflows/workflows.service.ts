@@ -4,19 +4,23 @@ import { UpdateWorkflow } from '@growchief/shared-both/dto/platforms/update.work
 import { TemporalService } from 'nestjs-temporal-core';
 import { EnrichmentDto } from '@growchief/shared-both/dto/enrichment/enrichment.dto';
 import { WorkflowNodes as WorkflowNodesInterface } from '@prisma/client';
-import { WorkflowNodes } from '@growchief/orchestrator/workflows';
 import { makeId } from '@growchief/shared-both/utils/make.id';
 import { TypedSearchAttributes } from '@temporalio/common';
 import {
-  botId as typedBotId,
+  botId,
   organizationId,
+  workflowId,
 } from '@growchief/shared-backend/temporal/temporal.search.attribute';
+import { BotsService } from '@growchief/shared-backend/database/bots/bots.service';
+import { uniq } from 'lodash';
+import { botList } from '@growchief/shared-backend/bots/bot.list';
 
 @Injectable()
 export class WorkflowsService {
   constructor(
     private _workflowsRepository: WorkflowsRepository,
     private _temporal: TemporalService,
+    private _botsService: BotsService,
   ) {}
 
   static mapNodes(
@@ -55,8 +59,106 @@ export class WorkflowsService {
     return this._workflowsRepository.getWorkflowsByOrganization(organizationId);
   }
 
-  async getWorkflowAccounts(workflowId: string) {
-    return this._workflowsRepository.getWorkflowAccounts(workflowId);
+  async uploadLeads(wid: string, orgId: string, urls: string[]) {
+    const workflow = await this.getWorkflowAccounts(wid, orgId);
+    if (!workflow) {
+      return { error: 'Workflow not found or not active' };
+    }
+
+    const accounts = await Promise.all(
+      workflow.children.flatMap(async (node) => {
+        const data = JSON.parse(node.data || '{}');
+        const bot = (await this._botsService.getBot(data.account.id))!;
+        const platform = botList.find((p) => p.identifier === bot?.platform)!;
+        return { bot, platform };
+      }),
+    );
+
+    for (const account of accounts) {
+      if (!account.platform.searchURL) {
+        continue;
+      }
+
+      const matchUrl = urls.find((p) =>
+        (account?.platform?.searchURL?.regex || []).some((r) => p.match(r)),
+      );
+
+      if (!matchUrl) {
+        continue;
+      }
+
+      await this._temporal
+        .getClient()
+        .getRawClient()
+        ?.workflow.start('workflowUploadLeads', {
+          args: [
+            { workflowId: wid, orgId, botId: account.bot.id, url: matchUrl },
+          ],
+          workflowId: `url-leads-${wid}-${makeId(20)}`,
+          taskQueue: 'main',
+          typedSearchAttributes: new TypedSearchAttributes([
+            {
+              key: workflowId,
+              value: wid,
+            },
+            {
+              key: organizationId,
+              value: orgId,
+            },
+            {
+              key: botId,
+              value: account.bot.id,
+            },
+          ]),
+          retry: {
+            maximumAttempts: 1,
+          },
+        });
+    }
+  }
+
+  async importURLList(workflowId: string, organizationId: string) {
+    const workflow = await this.getWorkflowAccounts(workflowId, organizationId);
+    if (!workflow) {
+      return { error: 'Workflow not found or not active' };
+    }
+
+    const accounts = await Promise.all(
+      workflow.children.flatMap((node) => {
+        const data = JSON.parse(node.data || '{}');
+        return this._botsService.getBot(data.account.id);
+      }),
+    );
+
+    const platforms = uniq(
+      accounts.map((p) => p?.platform).filter((p) => p) as string[],
+    );
+
+    return platforms
+      .map((platform: string) => {
+        return botList.find((p) => p.identifier === platform && p.searchURL)!;
+      })
+      .filter((p) => p)
+      .map((p) => {
+        return {
+          name: p.label,
+          identifier: p.identifier,
+          searchURL: {
+            description: p.searchURL?.description,
+            regex: p.searchURL?.regex.map((p) => ({
+              source: p.source,
+              flag: p.flags,
+            })),
+          },
+        };
+      });
+  }
+
+  async getWorkflowAccounts(workflowId: string, organizationId?: string) {
+    return this._workflowsRepository.getWorkflowAccounts(
+      workflowId,
+      organizationId,
+    );
   }
 
   async getWorkflow(id: string, organizationId?: string) {

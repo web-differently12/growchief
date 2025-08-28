@@ -23,6 +23,23 @@ export class WorkflowsController {
     return this._workflowsService.getWorkflows(organization.id);
   }
 
+  @Post('/:id/upload-leads')
+  async uploadLeads(
+    @Param('id') id: string,
+    @Body('urls') urls: string[],
+    @GetOrganizationFromRequest() organization: Organization,
+  ) {
+    return this._workflowsService.uploadLeads(id, organization.id, urls);
+  }
+
+  @Get('/:id/import-url-list')
+  async importURLList(
+    @Param('id') id: string,
+    @GetOrganizationFromRequest() organization: Organization,
+  ) {
+    return this._workflowsService.importURLList(id, organization.id);
+  }
+
   @Get('/:id')
   async getWorkflow(
     @Param('id') id: string,

@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { PlusIcon } from "@growchief/frontend/components/icons/plus.icon.tsx";
 import { DeleteIcon } from "@growchief/frontend/components/icons/delete.icon.tsx";
 import { CodeIcon } from "@growchief/frontend/components/icons/code.icon.tsx";
+import { ImportIcon } from "@growchief/frontend/components/icons/import.icon.tsx";
 import { Button } from "@growchief/frontend/components/ui/button.tsx";
 import { useNavigate } from "react-router";
 import { useDecisionModal } from "@growchief/frontend/utils/use.decision.modal.tsx";
@@ -15,6 +16,7 @@ import { useToaster } from "@growchief/frontend/utils/use.toaster.tsx";
 import { createToolTip } from "@growchief/frontend/utils/create.tool.tip.tsx";
 import { useModals } from "@growchief/frontend/utils/store.ts";
 import { GetCodeComponent } from "@growchief/frontend/components/workflows/get.code.component.tsx";
+import { ImportURLListComponent } from "@growchief/frontend/components/workflows/import.url.list.component.tsx";
 
 const StatusBadge: FC<{ active: boolean }> = ({ active }) => {
   return (
@@ -87,6 +89,19 @@ const WorkflowRow: FC<{
     [workflow.id, modals]
   );
 
+  const handleImportURLList = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      modals.show({
+        label: "Import URL List",
+        component: (close) => (
+          <ImportURLListComponent id={workflow.id} close={close} />
+        ),
+      });
+    },
+    [workflow.id, modals]
+  );
+
   return (
     <tr
       className="hover:bg-boxHover transition-all duration-200 border-b border-background cursor-pointer"
@@ -133,6 +148,15 @@ const WorkflowRow: FC<{
       <td className="px-[20px] py-[16px]">
         <div className="flex items-center gap-[8px]">
           <button
+            {...createToolTip("Import URL list")}
+            onClick={handleImportURLList}
+            className="flex items-center justify-center w-[32px] h-[32px] rounded-[6px] hover:bg-btn-primary/20 transition-all duration-200"
+            title={`Import URL list for ${workflow.name}`}
+          >
+            <ImportIcon className="w-[16px] h-[16px]" />
+          </button>
+          <button
+            {...createToolTip("Get workflow code")}
             onClick={handleGetCode}
             className="flex items-center justify-center w-[32px] h-[32px] rounded-[6px] hover:bg-btn-primary/20 transition-all duration-200"
             title={`Get code for ${workflow.name}`}
@@ -140,6 +164,7 @@ const WorkflowRow: FC<{
             <CodeIcon className="w-[16px] h-[16px]" />
           </button>
           <button
+            {...createToolTip("Delete workflow")}
             onClick={handleDelete}
             className="flex items-center justify-center w-[32px] h-[32px] rounded-[6px] hover:bg-red-600/20 transition-all duration-200 text-red-400 hover:text-red-300"
             title={`Delete ${workflow.name}`}

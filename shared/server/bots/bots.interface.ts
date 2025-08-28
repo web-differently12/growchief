@@ -37,6 +37,8 @@ export type RunEnrichment = Omit<Required<EnrichmentReturn>, 'url'> & {
   pending: boolean;
 };
 
+export type RequireField<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
 export abstract class BotAbstract {
   abstract identifier: string;
   abstract label: string;
@@ -47,12 +49,21 @@ export abstract class BotAbstract {
   abstract preventLoadingImages: boolean;
   abstract urlRegex: RegExp;
   abstract isWWW: boolean;
+  abstract searchURL?: {
+    description: string;
+    regex: RegExp[];
+  };
 
   [key: string]:
     | string
     | number
     | boolean
     | RegExp
+    | {
+        description: string;
+        regex: RegExp[];
+      }
+    | undefined
     | ((
         params: ParamsValue,
         lead: RunEnrichment,
@@ -65,9 +76,20 @@ export abstract class BotAbstract {
 
   abstract accountLimited(
     params: ParamsValue,
-  ): Promise<Required<ProgressResponse> | false>;
+  ): Promise<Omit<Required<ProgressResponse>, 'leads'> | false>;
 
   abstract processLead(params: ParamsValue): Promise<RunEnrichment | false>;
+
+  async leadList(
+    params: ParamsValue,
+  ): Promise<RequireField<ProgressResponse, 'leads'>> {
+    return {
+      endWorkflow: true,
+      delay: 0,
+      repeatJob: false,
+      leads: [],
+    };
+  }
 
   abstract login(
     params: ParamsValue,

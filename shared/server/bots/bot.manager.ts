@@ -499,7 +499,6 @@ export class BotManager extends BotTools {
     // if we are not logged in, let's go to the page, but we don't have to wait for it to be fully loaded
     // This will lower the risk of getting stuck on the 1st step
     if (functionName !== 'login' && data) {
-      console.log(url);
       // let's run a captcha solver in the background, if there is anything we need to solve, it will pause everything.
       // cursor.captchaSolver();
       page
@@ -510,7 +509,7 @@ export class BotManager extends BotTools {
     }
 
     const lead =
-      functionName === 'login'
+      functionName === 'login' || functionName === 'leadList'
         ? {}
         : await this.processLead(leadId, () => {
             return findProvider.processLead({
@@ -520,7 +519,7 @@ export class BotManager extends BotTools {
             } satisfies ExactParams);
           });
 
-    if (!lead && functionName !== 'login') {
+    if (!lead && functionName !== 'login' && functionName !== 'leadList') {
       return {
         delay: 0,
         repeatJob: false,
@@ -531,6 +530,8 @@ export class BotManager extends BotTools {
     if (lead && 'firstName' in lead && 'lastName' in lead) {
       // @ts-ignore
       cursor.setDataVariables(lead);
+    } else if (data.url) {
+      cursor.setDataVariables(data);
     }
 
     if (functionName === 'screenShare') {

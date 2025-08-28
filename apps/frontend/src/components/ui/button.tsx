@@ -19,7 +19,7 @@ const Button = React.forwardRef<
         variant === "outline" &&
           "border border-secondary bg-transparent hover:bg-innerBackground text-secondary py-[10px]",
         variant === "secondary" &&
-          "bg-innerBackground hover:bg-[#1F1F1F] text-primary border border-[#1F1F1F] py-[10px]",
+          "bg-innerBackground text-primary border border-[#1F1F1F] py-[10px]",
         variant === "destructive" &&
           "bg-red-600 hover:bg-red-700 text-white py-[10px]",
         variant === "ghost" &&

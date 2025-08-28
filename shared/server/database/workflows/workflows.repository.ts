@@ -12,9 +12,10 @@ export class WorkflowsRepository {
     private _workflowNodes: PrismaRepository<'workflowNodes'>,
   ) {}
 
-  async getWorkflowAccounts(workflowId: string) {
+  async getWorkflowAccounts(workflowId: string, organizationId?: string) {
     return this._workflowNodes.model.workflowNodes.findFirst({
       where: {
+        ...(organizationId ? { organizationId } : {}),
         workflowId,
         type: 'api',
       },

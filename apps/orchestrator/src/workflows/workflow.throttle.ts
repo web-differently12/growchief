@@ -5,6 +5,7 @@ import {
   condition,
   getExternalWorkflowHandle,
   continueAsNew,
+  startChild,
 } from '@temporalio/workflow';
 import type { AccountsStepActivity } from '@growchief/orchestrator/activities/accounts.step.activity';
 import { cancelAll } from '@growchief/orchestrator/signals/cancel.all.signal';
@@ -20,6 +21,13 @@ import { stepCompleted } from '@growchief/orchestrator/signals/step.completed.si
 import { awaitedTryCatch } from '@growchief/shared-both/utils/awaited.try.catch';
 import { WorkingHoursManager } from '@growchief/orchestrator/utils/working.hours.manager';
 import { botLoggedSignal } from '@growchief/orchestrator/signals/bot.logged.signal';
+import { workflowCampaign } from '@growchief/orchestrator/workflows/workflow.campaign';
+import { makeId } from '@growchief/shared-both/utils/make.id';
+import { TypedSearchAttributes } from '@temporalio/common';
+import {
+  botId as typedBotId,
+  organizationId,
+} from '@growchief/shared-backend/temporal/temporal.search.attribute';
 
 const PROGRESS_DEADLINE = 10 * 60 * 1000;
 
@@ -220,14 +228,50 @@ export async function userWorkflowThrottler({
     );
 
     // if progressValue is null it means the job failed, so we should remove it from the queue and cancel the workflow
-    const { endWorkflow, delay, repeatJob, restriction } = progressValue || {
-      endWorkflow: true,
-      delay: 0,
-      repeatJob: false,
-    };
+    const { endWorkflow, delay, repeatJob, restriction, leads } =
+      progressValue || {
+        endWorkflow: true,
+        delay: 0,
+        repeatJob: false,
+        leads: [],
+      };
 
     // set the next allowed at time
     currentNextAllowedAt = Date.now() + GAP_MS;
+
+    if (leads && leads.length > 0) {
+      for (const lead of leads) {
+        if (!lead.url) {
+          continue;
+        }
+
+        try {
+          await startChild(workflowCampaign, {
+            workflowId: `campaign-${job.workflowId}-${makeId(20)}`,
+            taskQueue: 'main',
+            args: [
+              {
+                orgId: job.orgId,
+                workflowId: job.workflowId,
+                body: {
+                  organization_name: '',
+                  email: '',
+                  firstName: lead.firstName,
+                  lastName: lead.lastName,
+                  urls: [lead.url],
+                },
+              },
+            ],
+            typedSearchAttributes: new TypedSearchAttributes([
+              {
+                key: organizationId,
+                value: job.orgId,
+              },
+            ]),
+          });
+        } catch (err) {}
+      }
+    }
 
     if (restriction) {
       await saveRestriction(job.botId, job.functionName, restriction.type);
@@ -265,7 +309,7 @@ export async function userWorkflowThrottler({
     }
 
     // Notify the campaign that this work item is complete
-    if (!repeatJob) {
+    if (!repeatJob && job.leadId !== 'ignore') {
       try {
         await saveActivity(
           job.leadId,

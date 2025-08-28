@@ -126,10 +126,40 @@ export const useWorkflowsRequest = () => {
     [fetch],
   );
 
+  const importURLList = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/workflows/${id}/import-url-list`);
+      return res.json() as Promise<
+        Array<{
+          name: string;
+          identifier: string;
+          searchURL: {
+            description: string;
+            regex: Array<{ source: string; flag: string }>;
+          };
+        }>
+      >;
+    },
+    [fetch],
+  );
+
+  const uploadLeads = useCallback(
+    async (workflowId: string, urls: string[]) => {
+      await fetch(`/workflows/${workflowId}/upload-leads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls }),
+      });
+    },
+    [],
+  );
+
   return {
     updateWorkflow,
     createWorkflow,
     deleteWorkflow,
     changeWorkflowActivity,
+    importURLList,
+    uploadLeads,
   };
 };
