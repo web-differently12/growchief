@@ -237,6 +237,7 @@ export class BotManager extends BotTools {
       url,
       leadId,
       proxyId,
+      appendUrl,
     } = params;
 
     const botInformation = (await this._botService.getBot(bot)) || {
@@ -502,14 +503,14 @@ export class BotManager extends BotTools {
       // let's run a captcha solver in the background, if there is anything we need to solve, it will pause everything.
       // cursor.captchaSolver();
       page
-        .goto(url, {
+        .goto(url + (appendUrl || ''), {
           timeout: 0,
         })
         .catch((err) => {});
     }
 
     const lead =
-      functionName === 'login' || functionName === 'leadList'
+      functionName === 'login' || functionName === 'leadList' || appendUrl
         ? {}
         : await this.processLead(leadId, () => {
             return findProvider.processLead({

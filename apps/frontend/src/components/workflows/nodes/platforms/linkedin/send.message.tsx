@@ -22,7 +22,7 @@ export const MessageRender: FC = () => {
 
 export const Settings: FC = () => {
   return (
-    <div className="px-[20px] flex flex-col gap-2">
+    <div className="px-[20px] flex flex-col gap-10">
       <TextareaForm label="Message" name="message" />
     </div>
   );

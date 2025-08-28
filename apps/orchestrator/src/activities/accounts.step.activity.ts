@@ -23,6 +23,7 @@ export class AccountsStepActivity {
     deadLine: number;
     functionName: string;
     leadId: string;
+    appendUrl?: string;
     proxyId?: string;
   }): Promise<ProgressResponse> {
     return (await this._botManager.run(true, {
@@ -36,6 +37,7 @@ export class AccountsStepActivity {
       deadline: params.deadLine,
       leadId: params.leadId,
       proxyId: params.proxyId,
+      appendUrl: params.appendUrl,
     })) as ProgressResponse;
   }
 }

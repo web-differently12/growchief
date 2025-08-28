@@ -73,7 +73,7 @@ const Account: FC<SideMenuProps> = ({ nodeId }) => {
   );
 
   if (nodes.length > 1) {
-    return <style>{`.render-settings {display: none}`}</style>
+    return <style>{`.render-settings {display: none}`}</style>;
   }
 
   if (children && account) {
@@ -237,10 +237,14 @@ export const WorkflowNode: FC<NodeProps<Node<{ text: string }, "default">>> =
         <>
           {!!account && (
             <div className="flex pt-[5px] items-center gap-[10px]">
-              <div>
+              <div className="relative">
                 <img
                   src={account.profilePicture}
                   className="w-[30px] h-[30px] rounded-full"
+                />
+                <img
+                  src={`/socials/${account.platform}.png`}
+                  className="w-[15px] h-[15px] -right-[5px] -bottom-[5px] rounded-full absolute"
                 />
               </div>
               <div>{account.name}</div>

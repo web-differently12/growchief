@@ -24,10 +24,7 @@ import { botLoggedSignal } from '@growchief/orchestrator/signals/bot.logged.sign
 import { workflowCampaign } from '@growchief/orchestrator/workflows/workflow.campaign';
 import { makeId } from '@growchief/shared-both/utils/make.id';
 import { TypedSearchAttributes } from '@temporalio/common';
-import {
-  botId as typedBotId,
-  organizationId,
-} from '@growchief/shared-backend/temporal/temporal.search.attribute';
+import { organizationId } from '@growchief/shared-backend/temporal/temporal.search.attribute';
 
 const PROGRESS_DEADLINE = 10 * 60 * 1000;
 
@@ -45,6 +42,7 @@ export type Work = {
   orgId: string;
   botId: string;
   totalRepeat: number;
+  appendUrl?: string;
 };
 
 const { saveActivity, saveRestriction, getStepRestrictions } =
@@ -224,6 +222,7 @@ export async function userWorkflowThrottler({
         deadLine: PROGRESS_DEADLINE,
         leadId: job.leadId,
         proxyId: botModel?.proxyId || '',
+        appendUrl: job.appendUrl,
       }),
     );
 

@@ -396,12 +396,16 @@ export class LinkedinProvider extends BotAbstract {
 
     await convo.waitFor({ state: 'visible' });
 
-    const getAllMessages = convo.locator('.msg-s-event-listitem__body');
-    await getAllMessages.first().waitFor();
+    let allMessagesContent: string[] = [];
 
-    const allMessagesContent = (await getAllMessages.allInnerTexts()).map((p) =>
-      p.trim(),
-    );
+    try {
+      const getAllMessages = convo.locator('.msg-s-event-listitem__body');
+      await getAllMessages.first().waitFor();
+
+      allMessagesContent = (await getAllMessages.allInnerTexts()).map((p) =>
+        p.trim(),
+      );
+    } catch (err) {}
 
     if (
       allMessagesContent.some((p) => compareTwoStrings(p, data.message) > 0.95)
@@ -443,6 +447,52 @@ export class LinkedinProvider extends BotAbstract {
       delay: 0,
       repeatJob: false,
       endWorkflow: false,
+    };
+  }
+
+  @Tool({
+    priority: 0,
+    title: 'Visit Profile',
+    identifier: 'visit-linkedin',
+    allowedBeforeIdentifiers: [],
+    notAllowedBeforeIdentifiers: [],
+    description: 'Visit the profile page',
+    notAllowedBeforeIdentifier: ['visit-linkedin'],
+    maxChildren: 1,
+  })
+  async visitProfile(params: ParamsValue) {
+    await timer(10000);
+    return {
+      endWorkflow: false,
+      delay: 0,
+      repeatJob: false,
+    };
+  }
+
+  @Tool({
+    priority: 3,
+    title: 'Like last post',
+    identifier: 'like-linkedin',
+    allowedBeforeIdentifiers: [],
+    notAllowedBeforeIdentifiers: [],
+    description: 'Like the last post on LinkedIn',
+    notAllowedBeforeIdentifier: ['visit-linkedin'],
+    maxChildren: 1,
+    appendUrl: '/recent-activity/all/',
+  })
+  async likeTheLastPost(params: ParamsValue) {
+    try {
+      const likeButton = params.page.locator('.reactions-react-button').first();
+      await likeButton.waitFor({ state: 'visible', timeout: 60000 });
+      await timer(5000);
+      await params.cursor.click(likeButton);
+      await timer(10000);
+    } catch (err) {}
+
+    return {
+      endWorkflow: false,
+      delay: 0,
+      repeatJob: false,
     };
   }
 

@@ -22,5 +22,6 @@ export interface ToolParams {
   allowedBeforeIdentifiers: string[];
   notAllowedBeforeIdentifiers: string[];
   notAllowedBeforeIdentifier: string[];
+  appendUrl?: string;
   maxChildren?: number;
 }

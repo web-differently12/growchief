@@ -127,6 +127,7 @@ export async function workflowBotJobs({
           priority: tool.priority,
           leadId,
           totalRepeat: 0,
+          appendUrl: tool.appendUrl,
         });
 
         // Wait for this step to actually complete before proceeding

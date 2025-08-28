@@ -135,4 +135,5 @@ export interface BotsRequestSetupDefault {
   url: string;
   leadId: string;
   proxyId?: string;
+  appendUrl?: string;
 }
