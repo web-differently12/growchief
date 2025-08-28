@@ -44,14 +44,13 @@
 ## Introduction
 
 Growchief is an open-source social media automation tool (aka social scraper). It allows you to create a workflow (step-by-step) for interacting with different accounts on social media, such as sending a connection request, following up with a message, and so on.
-
-Unlike other platforms, GrowChief does not work with search criteria. You have to specify the account email, URL, or company information to connect with it. We do not encourage spam (perfect for API/n8n automations).
+We do not encourage spam (perfect for API/n8n automations).
 
 ## Why is GrowChief so good?
 
 * It takes care of concurrency — even if you create 10 workflows with the same account and trigger all of them at the same time, it will make an action every 10 minutes, never having multiple scrapings happening at the same time.
 
-* Enrichment waterfull - when you don't provide the account URL but other parameters like email, we use multiple provider to figure out the profile URL.
+* Enrichment waterful — when you don't provide the account URL but other parameters like email, we use multiple provider to figure out the profile URL.
 
 * It takes care of your working hours — you can use the API to keep adding leads to your workflows, but they will only be processed during working hours.
 
@@ -63,7 +62,7 @@ Unlike other platforms, GrowChief does not work with search criteria. You have t
 
 * It uses a special technology to authenticate your accounts — you never need to put your username and password directly into the system.
 
-* It always runs in headed mode — our Docker image is already built with `xvfb` for real human automation.
+* It always runs in headful — our Docker image is already built with `xvfb` for real human automation.
 
 ## Things you should know
 
