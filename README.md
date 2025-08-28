@@ -87,4 +87,4 @@ View https://github.com/growchief/growchief/wiki/QuickStart
 
 ## Sponsorship
 
-This can be very vaulable for Proxies / Lead enrichment companies, feel free to check our sponsorship page.
+This can be very valuable for Proxies / Lead enrichment companies, feel free to check our sponsorship page.
