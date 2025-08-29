@@ -361,7 +361,7 @@ export const AnalyticsComponent: FC = () => {
   useEffect(() => {
     if (!dateRange?.start || !dateRange?.end) return;
 
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
     params.set("view", viewType);
     params.set("fromDate", dateRange.start.toISOString().split("T")[0]);
     params.set("toDate", dateRange.end.toISOString().split("T")[0]);
