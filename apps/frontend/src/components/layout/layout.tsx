@@ -19,6 +19,7 @@ import { NotificationsComponent } from "@growchief/frontend/components/notificat
 import { CheckSubscription } from "@growchief/frontend/components/layout/check.subscription.tsx";
 import { SuperAdminComponent } from "@growchief/frontend/components/layout/super.admin.component.tsx";
 import clsx from "clsx";
+import { OnboardingComponent } from "@growchief/frontend/components/onboarding/onboarding.component.tsx";
 
 export const Layout: FC = () => {
   const fetch = useFetch();
@@ -130,6 +131,7 @@ export const Layout: FC = () => {
           </div>
         </div>
         <ModalManager>
+          <OnboardingComponent />
           <div className="flex-1 flex flex-col gap-[1px]">
             <div className="h-[80px] flex bg-innerBackground rounded-t-[8px] px-[20px] items-center text-[24px] font-[600]">
               <div className="flex flex-1">

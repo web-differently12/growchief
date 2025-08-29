@@ -12,7 +12,6 @@ import { GetUserFromRequest } from '@growchief/backend/services/auth/user.from.r
 import { AcceptOrDeclineInviteDto } from '@growchief/shared-both/dto/team/accept.or.decline.invite.dto';
 import { GetOrganizationFromRequest } from '@growchief/backend/services/auth/org.from.request';
 import { getUrlFromDomain } from '@growchief/shared-both/utils/get.url.from.domain';
-import { SubscriptionRequired } from '@growchief/shared-backend/billing/billing.guard';
 
 @Controller('/users')
 export class UsersController {

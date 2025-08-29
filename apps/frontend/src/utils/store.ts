@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ReactNode } from "react";
 import { makeId } from "@growchief/shared-both/utils/make.id.ts";
+import { useShallow } from "zustand/react/shallow";
 
 export interface User {
   id: string;
@@ -34,6 +35,7 @@ interface State {
   setUser: (user?: User) => void;
   showModal: (params: ModalManagerInterface) => void;
   closeModal: (id: string) => void;
+  closeAllModals: () => void;
 }
 
 export const useBearStore = create<State>((set) => ({
@@ -49,11 +51,17 @@ export const useBearStore = create<State>((set) => ({
     set((state) => ({
       modalManager: state.modalManager.filter((modal) => modal.id !== id),
     })),
+  closeAllModals: () => set({ modalManager: [] }),
   setMenu: (menu) => set({ menu: menu }),
 }));
 
 export const useModals = () => {
-  return { show: useBearStore((state) => state.showModal) };
+  return useBearStore(
+    useShallow((state) => ({
+      show: state.showModal,
+      closeAll: state.closeAllModals,
+    })),
+  );
 };
 
 export const useUser = () => useBearStore((state) => state.user);

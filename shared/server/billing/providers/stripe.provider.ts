@@ -100,7 +100,7 @@ export class StripeProvider implements BillingInterface {
     const { url } = await stripe.checkout.sessions.create({
       customer: customerId,
       cancel_url: process.env['FRONTEND_URL'] + `/billing?cancel=true`,
-      success_url: process.env['FRONTEND_URL'] + `/accounts?onboarding=true`,
+      success_url: process.env['FRONTEND_URL'] + `/analytics?onboarding=true`,
       mode: 'subscription',
       subscription_data: {
         ...(trial ? { trial_period_days: this.trialLength } : {}),
