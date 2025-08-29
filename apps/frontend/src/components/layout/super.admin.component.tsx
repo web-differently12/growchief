@@ -65,7 +65,7 @@ export const ViewasComponentInner: FC<{
         setIsDropdownOpen(false);
       }
     }, 300),
-    []
+    [],
   );
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export const ViewasComponentInner: FC<{
         if (!search) return [];
 
         const response = await fetch(
-          `/users/all-users?search=${encodeURIComponent(search)}`
+          `/users/all-users?search=${encodeURIComponent(search)}`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -108,7 +108,7 @@ export const ViewasComponentInner: FC<{
         return [];
       }
     },
-    [fetch]
+    [fetch],
   );
 
   const fetchPricing = useCallback(async () => {
@@ -126,19 +126,19 @@ export const ViewasComponentInner: FC<{
   }, [fetch]);
 
   const { data: users, isLoading } = useSWR([`users-search`, searchTerm], () =>
-    fetchUsers(searchTerm)
+    fetchUsers(searchTerm),
   );
 
   const { data: pricingPlans } = useSWR("pricing-plans", fetchPricing);
 
   const handleViewAs = async (userId: string) => {
-    if (userId === "reset") {
-      document.cookie =
-        "viewas=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      window.location.reload();
-      return;
-    }
-    document.cookie = `viewas=${userId}; path=/; max-age=31536000`;
+    await fetch("/billing/view-as", {
+      method: "POST",
+      body: JSON.stringify({
+        todo: userId === "reset" ? "reset" : "set",
+        userId,
+      }),
+    });
     window.location.reload();
   };
 

@@ -15,5 +15,3 @@ export class IsSuperAdmin implements CanActivate {
     return request?.user?.isSuperAdmin || false;
   }
 }
-
-export const IsSuperAdminGuard = () => UseGuards(IsSuperAdmin);

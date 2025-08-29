@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type {
   Organization,
   User,
@@ -8,12 +16,14 @@ import type {
 import { BillingProvider } from '@growchief/shared-backend/billing/billing.provider';
 import { ModuleRef } from '@nestjs/core';
 import { permissionsList } from '@growchief/shared-backend/billing/permissions.list';
-// import { IsSuperAdminPermission } from '@growchief/shared-backend/billing/permission-body/admin/is.super.admin.permission';
 import { SubscriptionService } from '@growchief/shared-backend/database/subscription/subscription.service';
 import { GetOrganizationFromRequest } from '../services/auth/org.from.request';
 import { GetUserFromRequest } from '@growchief/backend/services/auth/user.from.request';
 import { PackageDto } from '@growchief/shared-both/dto/billing/package.dto';
 import { PackageCancelDto } from '@growchief/shared-both/dto/billing/package.cancel.dto';
+import { getUrlFromDomain } from '@growchief/shared-both/utils/get.url.from.domain';
+import type { Response } from 'express';
+import { IsSuperAdmin } from '@growchief/backend/services/auth/is.super.admin';
 
 @Controller('/billing')
 export class BillingController {
@@ -22,7 +32,29 @@ export class BillingController {
     private _subscriptionService: SubscriptionService,
     private _moduleRef: ModuleRef,
   ) {}
-  // @PermissionBody(IsSuperAdminPermission)
+  @UseGuards(IsSuperAdmin)
+  @Post('/view-as')
+  setViewAs(
+    @GetUserFromRequest() user: User & { organizations: UserOrganization[] },
+    @Body() body: { userId: string; todo: 'reset' | 'set' },
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    response.cookie('viewas', body.todo === 'reset' ? '' : body.userId, {
+      domain: getUrlFromDomain(process.env.FRONTEND_URL!),
+      expires: new Date(
+        body.todo === 'set'
+          ? Date.now() + 1000 * 60 * 60 * 24 * 365
+          : Date.now() - 10000,
+      ),
+      secure: true,
+      httpOnly: true,
+      sameSite: 'none',
+    });
+
+    return { change: true };
+  }
+
+  @UseGuards(IsSuperAdmin)
   @Post('/assign-package')
   assignPermission(
     @GetOrganizationFromRequest() organization: Organization,
