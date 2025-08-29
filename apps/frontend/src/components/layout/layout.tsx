@@ -1,4 +1,11 @@
-import { type FC, Fragment, useCallback, useEffect, useMemo } from "react";
+import {
+  type FC,
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { ModeIcon } from "@growchief/frontend/components/icons/mode.icon.tsx";
 import { MenuItem } from "@growchief/frontend/components/layout/menu.item.tsx";
 import {
@@ -23,8 +30,9 @@ import { OnboardingComponent } from "@growchief/frontend/components/onboarding/o
 
 export const Layout: FC = () => {
   const fetch = useFetch();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, setUser } = useBearStore(
-    useShallow((state) => ({ user: state.user, setUser: state.setUser })),
+    useShallow((state) => ({ user: state.user, setUser: state.setUser }))
   );
 
   const loadUser = useCallback(async () => {
@@ -64,7 +72,7 @@ export const Layout: FC = () => {
         <div className="flex flex-1 flex-col">
           {user.isSuperAdmin && <SuperAdminComponent />}
           <CheckSubscription />
-          <div className="blurMe flex flex-1 flex-col">
+          <div className="blurMe flex flex-1 flex-col px-4 sm:px-6 lg:px-8">
             <JoinTeamModal />
             <Routes>
               {memoRoutes.routes
@@ -85,14 +93,54 @@ export const Layout: FC = () => {
     <div className="flex flex-1 flex-col">
       {user.isSuperAdmin && <SuperAdminComponent />}
       <JoinTeamModal />
-      <div className="flex gap-[8px] flex-1">
-        <div className="w-[86px] bg-innerBackground rounded-[8px] pt-[20px] pb-[12px] text-center select-none">
+      <div className="flex gap-[8px] flex-1 relative">
+        {/* Mobile Overlay */}
+        {isMobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <div
+          className={clsx(
+            "bg-innerBackground rounded-[8px] pt-[20px] text-center select-none transition-all duration-300",
+            // Mobile: slide in from left, full height overlay
+            "fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto",
+            "w-[280px] lg:w-[86px]",
+            // Mobile menu visibility
+            isMobileMenuOpen
+              ? "translate-x-0"
+              : "-translate-x-full lg:translate-x-0"
+          )}
+        >
           <div
             className={clsx(
-              "fixed blurMe w-[86px] top-0 h-full pt-[32px] pb-[24px] px-[8px] flex flex-col gap-[32px]",
-              user.isSuperAdmin && "pt-[85px]",
+              "blurMe h-full pt-[32px] pb-[15px] px-[8px] flex flex-col gap-[32px]",
+              user.isSuperAdmin && "pt-[85px]"
             )}
           >
+            {/* Mobile close button */}
+            <button
+              className="absolute top-4 right-4 lg:hidden text-secondary hover:text-primary transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
             <div className="flex justify-center items-center">
               <div className="w-[60px] h-[60px] rounded-full overflow-hidden logo-shadow">
                 <img
@@ -103,7 +151,7 @@ export const Layout: FC = () => {
               </div>
             </div>
             <div className="flex-1 flex flex-col">
-              <div className="flex flex-1 flex-col gap-[16px]">
+              <div className="flex flex-1 flex-col gap-[8px] lg:gap-[16px]">
                 {memoRoutes.topRoutes
                   .filter((f) => f.menu)
                   .map((route) => (
@@ -112,10 +160,11 @@ export const Layout: FC = () => {
                       label={route.label}
                       to={route.path?.split("/")[1]!}
                       icon={route.icon}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     />
                   ))}
               </div>
-              <div className="flex flex-col gap-[16px]">
+              <div className="flex flex-col gap-[8px] lg:gap-[16px]">
                 {memoRoutes.bottomRoutes
                   .filter((f) => f.menu)
                   .map((route) => (
@@ -124,6 +173,7 @@ export const Layout: FC = () => {
                       label={route.label}
                       to={route.path?.split("/")[1]!}
                       icon={route.icon}
+                      onClick={() => setIsMobileMenuOpen(false)}
                     />
                   ))}
               </div>
@@ -132,38 +182,65 @@ export const Layout: FC = () => {
         </div>
         <ModalManager>
           <OnboardingComponent />
-          <div className="flex-1 flex flex-col gap-[1px]">
-            <div className="h-[80px] flex bg-innerBackground rounded-t-[8px] px-[20px] items-center text-[24px] font-[600]">
-              <div className="flex flex-1">
+          <div className="flex-1 flex flex-col gap-[1px] min-w-0">
+            <div className="h-[80px] flex bg-innerBackground rounded-t-[8px] px-[12px] sm:px-[20px] items-center text-[18px] sm:text-[24px] font-[600]">
+              {/* Mobile hamburger menu */}
+              <button
+                className="lg:hidden mr-4 text-secondary hover:text-primary transition-colors"
+                onClick={() => setIsMobileMenuOpen(true)}
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+
+              <div className="flex flex-1 min-w-0">
                 <PageName />
               </div>
-              <div className="select-none flex flex-row-reverse text-secondary gap-[20px]">
+              <div className="select-none flex flex-row-reverse text-secondary gap-[12px] sm:gap-[20px]">
                 <NotificationsComponent />
-                <div className="w-[1px] h-[24px] bg-secondary/20" />
+                <div className="hidden sm:block w-[1px] h-[24px] bg-secondary/20" />
                 <ModeIcon />
-                <OrganizationSelector />
+                <div className="hidden sm:block">
+                  <OrganizationSelector />
+                </div>
               </div>
             </div>
-            <Routes>
-              <Route
-                path="/auth/*"
-                element={<Navigate to="/analytics" replace />}
-              />
-              <Route path="/" element={<Navigate to="/analytics" replace />} />
-              {memoRoutes.routes.map((route) => (
+            <div className="rounded-b-[8px] flex-1 min-h-0 flex">
+              <Routes>
                 <Route
-                  {...route}
-                  element={
-                    <SubRoutesContext.Provider
-                      key={route.label}
-                      value={{ routes: route?.sub || [] }}
-                    >
-                      {route.element}
-                    </SubRoutesContext.Provider>
-                  }
+                  path="/auth/*"
+                  element={<Navigate to="/analytics" replace />}
                 />
-              ))}
-            </Routes>
+                <Route
+                  path="/"
+                  element={<Navigate to="/analytics" replace />}
+                />
+                {memoRoutes.routes.map((route) => (
+                  <Route
+                    {...route}
+                    element={
+                      <SubRoutesContext.Provider
+                        key={route.label}
+                        value={{ routes: route?.sub || [] }}
+                      >
+                        {route.element}
+                      </SubRoutesContext.Provider>
+                    }
+                  />
+                ))}
+              </Routes>
+            </div>
           </div>
         </ModalManager>
       </div>
