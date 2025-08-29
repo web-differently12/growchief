@@ -1,4 +1,4 @@
-import { type FC, useMemo } from "react";
+import { type FC, useEffect, useMemo } from "react";
 import { useLocation, matchPath } from "react-router";
 import { routes } from "@growchief/frontend/routes.tsx";
 import { useUser } from "@growchief/frontend/utils/store.ts";
@@ -14,6 +14,10 @@ export const PageName: FC = () => {
         : route.index && location.pathname === "/",
     );
   }, [location]);
+
+  useEffect(() => {
+    document.title = `GrowChief - ${currentRoute?.label}`;
+  }, [currentRoute?.label]);
 
   return <>{currentRoute?.label ?? ""}</>;
 };
