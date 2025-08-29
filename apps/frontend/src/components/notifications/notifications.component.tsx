@@ -176,7 +176,7 @@ export const NotificationsComponent = () => {
 
           <div className="max-h-[400px] overflow-y-auto">
             {notifications.isLoading ? (
-              <div className="px-[16px] py-[20px] text-center text-secondary">
+              <div className="px-[16px] py-[20px] text-[14px] text-center text-secondary">
                 Loading notifications...
               </div>
             ) : notifications.data && notifications.data.length > 0 ? (
