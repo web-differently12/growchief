@@ -107,17 +107,17 @@ export const Layout: FC = () => {
           className={clsx(
             "bg-innerBackground rounded-[8px] pt-[20px] text-center select-none transition-all duration-300",
             // Mobile: slide in from left, full height overlay
-            "fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto",
+            "max-lg:fixed max-lg:h-screen max-lg:top-0 lg:relative left-0 z-[999]",
             "w-[280px] lg:w-[86px]",
             // Mobile menu visibility
             isMobileMenuOpen
-              ? "translate-x-0"
-              : "-translate-x-full lg:translate-x-0"
+              ? "max-lg:translate-x-0"
+              : "max-lg:-translate-x-full"
           )}
         >
           <div
             className={clsx(
-              "blurMe h-full pt-[32px] pb-[15px] px-[8px] flex flex-col gap-[32px]",
+              "lg:fixed lg:left-[17px] lg:top-0 blurMe h-full pt-[32px] pb-[15px] px-[8px] flex flex-col gap-[32px]",
               user.isSuperAdmin && "pt-[85px]"
             )}
           >
