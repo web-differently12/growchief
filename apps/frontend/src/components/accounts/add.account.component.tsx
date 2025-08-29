@@ -121,7 +121,7 @@ const ProxySelectionStep: FC<{
 
   return (
     <>
-      <div className="mb-[16px]">
+      <div className="mt-[20px] mb-[16px]">
         <h2 className="text-[16px] font-[600] text-primary mb-[4px]">
           Select Proxy (Optional)
         </h2>
