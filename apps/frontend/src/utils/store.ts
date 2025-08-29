@@ -7,6 +7,8 @@ export interface User {
   email: string;
   roles: any;
   selfhosted: boolean;
+  isSuperAdmin: boolean;
+  viewas: string;
   org: {
     id: string;
     subscription: any;

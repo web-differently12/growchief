@@ -17,6 +17,8 @@ import { OrganizationSelector } from "@growchief/frontend/components/layout/orga
 import { ModalManager } from "@growchief/frontend/utils/modal.manager";
 import { NotificationsComponent } from "@growchief/frontend/components/notifications/notifications.component.tsx";
 import { CheckSubscription } from "@growchief/frontend/components/layout/check.subscription.tsx";
+import { SuperAdminComponent } from "@growchief/frontend/components/layout/super.admin.component.tsx";
+import clsx from "clsx";
 
 export const Layout: FC = () => {
   const fetch = useFetch();
@@ -57,7 +59,8 @@ export const Layout: FC = () => {
 
   if (!user.org.subscription && !user.selfhosted) {
     return (
-      <>
+      <div className="flex flex-1 flex-col">
+        {user.isSuperAdmin && <SuperAdminComponent />}
         <CheckSubscription />
         <div className="blurMe">
           <JoinTeamModal />
@@ -71,16 +74,17 @@ export const Layout: FC = () => {
               ))}
           </Routes>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="flex flex-1 flex-col">
+      {user.isSuperAdmin && <SuperAdminComponent />}
       <JoinTeamModal />
       <div className="flex gap-[8px] flex-1">
         <div className="w-[86px] bg-innerBackground rounded-[8px] pt-[20px] pb-[12px] text-center select-none">
-          <div className="fixed blurMe w-[86px] top-0 h-full pt-[32px] pb-[24px] px-[8px] flex flex-col gap-[32px]">
+          <div className={clsx("fixed blurMe w-[86px] top-0 h-full pt-[32px] pb-[24px] px-[8px] flex flex-col gap-[32px]", user.isSuperAdmin && 'pt-[85px]')}>
             <div className="flex justify-center items-center">
               <div className="w-[60px] h-[60px] rounded-full overflow-hidden logo-shadow">
                 <img
@@ -154,6 +158,6 @@ export const Layout: FC = () => {
           </div>
         </ModalManager>
       </div>
-    </>
+    </div>
   );
 };
