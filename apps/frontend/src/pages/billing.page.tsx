@@ -3,7 +3,7 @@ import { BillingComponent } from "@growchief/frontend/components/billing/billing
 
 export const BillingPage: FC = () => {
   return (
-    <div className="flex-1 bg-innerBackground rounded-b-[8px] p-[20px]">
+    <div className="flex flex-1 bg-innerBackground rounded-b-[8px] p-[20px]">
       <BillingComponent />
     </div>
   );

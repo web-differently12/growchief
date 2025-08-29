@@ -10,6 +10,7 @@ import { OrganizationSelector } from "@growchief/frontend/components/layout/orga
 import { useBillingRequest } from "@growchief/frontend/requests/billing.request.ts";
 import { useDecisionModal } from "@growchief/frontend/utils/use.decision.modal.tsx";
 import { LoadingComponent } from "@growchief/frontend/components/ui/loading.component.tsx";
+import { LogoutComponent } from "@growchief/frontend/components/layout/logout.component.tsx";
 
 interface PricingFeature {
   total: number | string;
@@ -274,17 +275,22 @@ ${
                         )}
                   </span>
                   <span className="text-[14px] text-secondary">/month</span>
-                  {interval === "year" && (
-                    <div className="text-[14px] text-secondary mt-[4px]">
-                      charged annually (
-                      {formatCurrency(
-                        plan[interval].price *
-                          (quantities[plan.identifier] || 1),
-                        plan[interval].currency,
-                      )}
-                      /year)
-                    </div>
-                  )}
+
+                  <div className="text-[14px] text-secondary mt-[4px]">
+                    {interval === "year" ? (
+                      <>
+                        charged annually (
+                        {formatCurrency(
+                          plan[interval].price *
+                            (quantities[plan.identifier] || 1),
+                          plan[interval].currency,
+                        )}
+                        /year)
+                      </>
+                    ) : (
+                      <>&nbsp;</>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex-grow">
@@ -412,6 +418,11 @@ ${
           <RenderOptions subscription={subscription} mutate={props.mutate} />
         )}
         <Faq />
+        {!subscription && (
+          <div className="flex justify-center mt-[20px]">
+            <LogoutComponent />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -605,69 +616,6 @@ export const GrowChiefLogo: FC = () => {
   );
 };
 
-export const Promotion: FC = () => {
-  return (
-    <div className="mb-[40px] p-[24px] bg-innerBackground border border-background rounded-[8px]">
-      <div className="grid md:grid-cols-2 gap-[32px] items-center">
-        <div className="space-y-[16px]">
-          <h3 className="text-2xl font-bold text-primary">
-            Supercharge Your Workflow Today
-          </h3>
-          <p className="text-secondary text-[14px]">
-            Join over 1,000+ professionals who trust our platform to streamline
-            their daily tasks and boost productivity.
-          </p>
-          <div className="space-y-[12px]">
-            <div className="flex items-center">
-              <svg
-                className="w-5 h-5 text-btn-primary mr-[8px]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              <span className="text-[14px] text-primary">
-                Free 7-day trial on all plans
-              </span>
-            </div>
-            <div className="flex items-center">
-              <svg
-                className="w-5 h-5 text-btn-primary mr-[8px]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              <span className="text-[14px] text-primary">
-                Cancel anytime, hassle-free
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col space-y-4 items-center md:items-end h-full justify-end">
-          <div className="bg-btn-primary hover:bg-btn-primary/90 px-[16px] py-[8px] rounded-[8px] text-white text-[14px] font-[600] transition-all">
-            Limited Time Offer
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const Faq: FC = () => {
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>(
     {},
@@ -723,7 +671,7 @@ const Faq: FC = () => {
               className="border border-background rounded-[8px] bg-innerBackground"
             >
               <button
-                className="w-full flex justify-between items-center p-[20px] text-left font-[600] text-[16px] text-primary hover:bg-background transition-colors rounded-[8px]"
+                className="w-full flex justify-between items-center p-[20px] text-left font-[600] text-[16px] text-primary hover:bg-innerBackgroundHover transition-colors rounded-[8px]"
                 onClick={() => toggleItem(index)}
               >
                 <div>{item.question}</div>
@@ -743,7 +691,7 @@ const Faq: FC = () => {
                 </svg>
               </button>
               {expandedItems[index] && (
-                <div className="px-[20px] pb-[20px] text-[14px] text-secondary">
+                <div className="p-[20px] text-[14px] text-secondary">
                   {item.answer}
                 </div>
               )}

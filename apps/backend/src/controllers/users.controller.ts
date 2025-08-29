@@ -22,13 +22,11 @@ export class UsersController {
   ) {}
 
   @Get('/invites')
-  @SubscriptionRequired()
   async getInvites(@GetUserFromRequest() user: User) {
     return this._userService.getInvites(user.email);
   }
 
   @Post('/invite/:id')
-  @SubscriptionRequired()
   async acceptOrDeclineInvite(
     @Param('id') id: string,
     @GetUserFromRequest() user: User,

@@ -8,11 +8,10 @@ import {
   matchPath,
 } from "react-router";
 import { LineIcon } from "@growchief/frontend/components/icons/line.icon.tsx";
-import { type FC, useCallback } from "react";
+import { type FC } from "react";
 import type { OneRoute } from "@growchief/frontend/routes.tsx";
 import clsx from "clsx";
-import { useDecisionModal } from "@growchief/frontend/utils/use.decision.modal.tsx";
-import { emitter, useFetch } from "@growchief/frontend/utils/use.fetch.tsx";
+import { LogoutComponent } from "@growchief/frontend/components/layout/logout.component.tsx";
 
 export const InnerMenu: FC<{ item: OneRoute }> = ({
   item: { path, label },
@@ -47,25 +46,6 @@ export const InnerMenu: FC<{ item: OneRoute }> = ({
 };
 export const SettingsComponent = () => {
   const { routes } = useSubRoutes();
-  const fetch = useFetch();
-  const decision = useDecisionModal();
-
-  const logout = useCallback(async () => {
-    const logout = await decision.open({
-      label: "Logout",
-      description: "Are you sure you want to logout?",
-      approveLabel: "Logout",
-      cancelLabel: "Cancel",
-    });
-
-    if (logout) {
-      await fetch("/users/logout", {
-        method: "POST",
-      });
-
-      emitter.emit("event", { name: "logout" });
-    }
-  }, []);
 
   return (
     <div className="flex-1 flex gap-[1px]">
@@ -77,12 +57,7 @@ export const SettingsComponent = () => {
             ))}
           </div>
         </div>
-        <div
-          onClick={logout}
-          className="text-red-600 hover:underline hover:font-bold cursor-pointer"
-        >
-          Logout
-        </div>
+        <LogoutComponent />
       </div>
       <div className="bg-innerBackground flex-1 flex-col flex p-[20px] gap-[12px]">
         <Routes>

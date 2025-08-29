@@ -2,7 +2,6 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  UseGuards,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 

@@ -59,22 +59,24 @@ export const Layout: FC = () => {
 
   if (!user.org.subscription && !user.selfhosted) {
     return (
-      <div className="flex flex-1 flex-col">
-        {user.isSuperAdmin && <SuperAdminComponent />}
-        <CheckSubscription />
-        <div className="blurMe">
-          <JoinTeamModal />
-          <Routes>
-            {memoRoutes.routes
-              .filter((f) => f.label === "Billing")
-              .map((route) => (
-                <Fragment key={route.label}>
-                  <Route {...route} path="*" />
-                </Fragment>
-              ))}
-          </Routes>
+      <ModalManager>
+        <div className="flex flex-1 flex-col">
+          {user.isSuperAdmin && <SuperAdminComponent />}
+          <CheckSubscription />
+          <div className="blurMe flex flex-1 flex-col">
+            <JoinTeamModal />
+            <Routes>
+              {memoRoutes.routes
+                .filter((f) => f.label === "Billing")
+                .map((route) => (
+                  <Fragment key={route.label}>
+                    <Route {...route} path="*" />
+                  </Fragment>
+                ))}
+            </Routes>
+          </div>
         </div>
-      </div>
+      </ModalManager>
     );
   }
 
@@ -84,7 +86,12 @@ export const Layout: FC = () => {
       <JoinTeamModal />
       <div className="flex gap-[8px] flex-1">
         <div className="w-[86px] bg-innerBackground rounded-[8px] pt-[20px] pb-[12px] text-center select-none">
-          <div className={clsx("fixed blurMe w-[86px] top-0 h-full pt-[32px] pb-[24px] px-[8px] flex flex-col gap-[32px]", user.isSuperAdmin && 'pt-[85px]')}>
+          <div
+            className={clsx(
+              "fixed blurMe w-[86px] top-0 h-full pt-[32px] pb-[24px] px-[8px] flex flex-col gap-[32px]",
+              user.isSuperAdmin && "pt-[85px]",
+            )}
+          >
             <div className="flex justify-center items-center">
               <div className="w-[60px] h-[60px] rounded-full overflow-hidden logo-shadow">
                 <img
