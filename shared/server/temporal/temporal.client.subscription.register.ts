@@ -7,6 +7,16 @@ export class TemporalClientSubscriptionRegister implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     try {
+      if (!!process.env.EMAIL_PROVIDER) {
+        await this._temporalService
+          ?.getClient()
+          ?.getRawClient()
+          ?.workflow?.start('workflowEmail', {
+            workflowId: 'send-emails',
+            taskQueue: 'main',
+          });
+      }
+
       if (!!process.env.BILLING_PROVIDER) {
         await this._temporalService
           ?.getClient()

@@ -5,6 +5,8 @@ import { AccountsStepActivity } from '@growchief/orchestrator/activities/account
 import { GetLeadsDetailsActivity } from '@growchief/orchestrator/activities/get.leads.details.activity';
 import { WorkflowInformationActivity } from '@growchief/orchestrator/activities/workflow.information.activity';
 import { DeactivateSubscriptionActivity } from '@growchief/orchestrator/activities/deactivate.subscription.activity';
+import { EmailActivity } from '@growchief/orchestrator/activities/email.activity';
+import { NotificationActivity } from '@growchief/orchestrator/activities/notification.activity';
 @Module({
   imports: [
     SharedServerModule,
@@ -13,6 +15,8 @@ import { DeactivateSubscriptionActivity } from '@growchief/orchestrator/activiti
       GetLeadsDetailsActivity,
       WorkflowInformationActivity,
       DeactivateSubscriptionActivity,
+      EmailActivity,
+      NotificationActivity,
     ]),
   ],
   controllers: [],

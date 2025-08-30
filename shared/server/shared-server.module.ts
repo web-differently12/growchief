@@ -15,6 +15,7 @@ import { DatabaseModule } from '@growchief/shared-backend/database/database.modu
 import { BotManager } from '@growchief/shared-backend/bots/bot.manager';
 import { ProxiesManager } from '@growchief/shared-backend/proxies/proxies.manager';
 import { URLService } from '@growchief/shared-both/utils/url.normalize';
+import { NotificationManager } from '@growchief/shared-backend/notifications/notification.manager';
 
 @Global()
 @Module({
@@ -32,6 +33,7 @@ import { URLService } from '@growchief/shared-both/utils/url.normalize';
     PermissionList,
     ProxiesManager,
     URLService,
+    NotificationManager,
   ],
   get exports() {
     return [...this.providers, ...this.imports];

@@ -6,6 +6,7 @@ import {
   getExternalWorkflowHandle,
   continueAsNew,
   startChild,
+  patched,
 } from '@temporalio/workflow';
 import type { AccountsStepActivity } from '@growchief/orchestrator/activities/accounts.step.activity';
 import { cancelAll } from '@growchief/orchestrator/signals/cancel.all.signal';
@@ -25,6 +26,7 @@ import { workflowCampaign } from '@growchief/orchestrator/workflows/workflow.cam
 import { makeId } from '@growchief/shared-both/utils/make.id';
 import { TypedSearchAttributes } from '@temporalio/common';
 import { organizationId } from '@growchief/shared-backend/temporal/temporal.search.attribute';
+import { NotificationActivity } from '@growchief/orchestrator/activities/notification.activity';
 
 const PROGRESS_DEADLINE = 10 * 60 * 1000;
 
@@ -60,6 +62,10 @@ const { getBot } = proxyActivities<WorkflowInformationActivity>({
 const { progress, getGap } = proxyActivities<AccountsStepActivity>({
   startToCloseTimeout: PROGRESS_DEADLINE,
   heartbeatTimeout: '30 seconds',
+});
+
+const { sendNotification } = proxyActivities<NotificationActivity>({
+  startToCloseTimeout: '2 minutes',
 });
 
 const sortFunction = (a: any, b: any) => {
@@ -237,6 +243,24 @@ export async function userWorkflowThrottler({
 
     // set the next allowed at time
     currentNextAllowedAt = Date.now() + GAP_MS;
+
+    if (patched('notifications')) {
+      if (restriction) {
+        await sendNotification({
+          orgId: job.orgId,
+          title: 'Restrictions',
+          message: restriction.message,
+          sendEmail: true,
+        });
+      } else if (delay) {
+        await sendNotification({
+          orgId: job.orgId,
+          title: 'Restrictions',
+          message: 'Your user is being delayed by ' + delay / 1000 + ' seconds',
+          sendEmail: false,
+        });
+      }
+    }
 
     if (leads && leads.length > 0) {
       for (const lead of leads) {

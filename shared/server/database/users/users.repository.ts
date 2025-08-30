@@ -8,7 +8,6 @@ import { AcceptOrDeclineInviteDto } from '@growchief/shared-both/dto/team/accept
 export class UsersRepository {
   constructor(
     private _user: PrismaRepository<'user'>,
-    private _organization: PrismaRepository<'organization'>,
     private _userOrganization: PrismaRepository<'userOrganization'>,
     private _invites: PrismaRepository<'invites'>,
   ) {}
