@@ -11,7 +11,7 @@ import { Tooltip } from 'react-tooltip';
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
-    <Tooltip id="tooltip" />
+    <Tooltip className="z-[99999]" id="tooltip" />
     <FetchComponent />
     <Toaster />
     <App />
