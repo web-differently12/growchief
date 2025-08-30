@@ -129,16 +129,16 @@ export const useWorkflowsRequest = () => {
   const importURLList = useCallback(
     async (id: string) => {
       const res = await fetch(`/workflows/${id}/import-url-list`);
-      return res.json() as Promise<
-        Array<{
+      return res.json() as Promise<{
+        searchLink: Array<{
           name: string;
           identifier: string;
           searchURL: {
             description: string;
             regex: Array<{ source: string; flag: string }>;
           };
-        }>
-      >;
+        }>;
+      }>;
     },
     [fetch],
   );

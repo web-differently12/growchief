@@ -120,7 +120,7 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
     const loadPlatforms = async () => {
       try {
         setIsLoading(true);
-        const data = await workflowsRequest.importURLList(id);
+        const { searchLink: data } = await workflowsRequest.importURLList(id);
         setPlatforms(data);
 
         // Initialize form with empty values for each platform

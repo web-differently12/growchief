@@ -134,24 +134,40 @@ export class WorkflowsService {
       accounts.map((p) => p?.platform).filter((p) => p) as string[],
     );
 
-    return platforms
-      .map((platform: string) => {
-        return botList.find((p) => p.identifier === platform && p.searchURL)!;
-      })
-      .filter((p) => p)
-      .map((p) => {
-        return {
-          name: p.label,
-          identifier: p.identifier,
-          searchURL: {
-            description: p.searchURL?.description,
-            regex: p.searchURL?.regex.map((p) => ({
-              source: p.source,
-              flag: p.flags,
-            })),
-          },
-        };
-      });
+    return {
+      link: platforms
+        .map((platform: string) => {
+          return botList.find((p) => p.identifier === platform && p.urlRegex)!;
+        })
+        .map((p) => {
+          return {
+            name: p.label,
+            identifier: p.identifier,
+            link: {
+              source: p.urlRegex.source,
+              flag: p.urlRegex.flags,
+            },
+          };
+        }),
+      searchLink: platforms
+        .map((platform: string) => {
+          return botList.find((p) => p.identifier === platform && p.searchURL)!;
+        })
+        .filter((p) => p)
+        .map((p) => {
+          return {
+            name: p.label,
+            identifier: p.identifier,
+            searchURL: {
+              description: p.searchURL?.description,
+              regex: p.searchURL?.regex.map((p) => ({
+                source: p.source,
+                flag: p.flags,
+              })),
+            },
+          };
+        }),
+    };
   }
 
   async getWorkflowAccounts(workflowId: string, organizationId?: string) {
