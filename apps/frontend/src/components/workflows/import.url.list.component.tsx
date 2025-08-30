@@ -6,12 +6,21 @@ import { useWorkflowsRequest } from "@growchief/frontend/requests/workflows.requ
 import { useToaster } from "@growchief/frontend/utils/use.toaster.tsx";
 import clsx from "clsx";
 
-interface Platform {
+interface SearchPlatform {
   name: string;
   identifier: string;
   searchURL: {
     description: string;
     regex: Array<{ source: string; flag: string }>;
+  };
+}
+
+interface LinkPlatform {
+  name: string;
+  identifier: string;
+  link: {
+    source: string;
+    flag: string;
   };
 }
 
@@ -24,8 +33,10 @@ interface ImportURLListComponentProps {
   close: () => void;
 }
 
+type TabType = "search" | "direct";
+
 const PlatformInput: FC<{
-  platform: Platform;
+  platform: SearchPlatform | LinkPlatform;
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -38,19 +49,30 @@ const PlatformInput: FC<{
       return;
     }
 
-    // Test if value matches any of the platform's regex patterns
-    const matchesAnyRegex = platform.searchURL.regex.some((regexObj) => {
+    // Check if this is a search platform or link platform
+    if ("searchURL" in platform) {
+      // Search platform - test against multiple regex patterns
+      const matchesAnyRegex = platform.searchURL.regex.some((regexObj) => {
+        try {
+          const regex = new RegExp(regexObj.source, regexObj.flag);
+          return regex.test(value);
+        } catch (error) {
+          console.error("Invalid regex pattern:", regexObj, error);
+          return false;
+        }
+      });
+      setIsValid(matchesAnyRegex);
+    } else if ("link" in platform) {
+      // Link platform - test against single regex pattern
       try {
-        const regex = new RegExp(regexObj.source, regexObj.flag);
-        return regex.test(value);
+        const regex = new RegExp(platform.link.source, platform.link.flag);
+        setIsValid(regex.test(value));
       } catch (error) {
-        console.error("Invalid regex pattern:", regexObj, error);
-        return false;
+        console.error("Invalid regex pattern:", platform.link, error);
+        setIsValid(false);
       }
-    });
-
-    setIsValid(matchesAnyRegex);
-  }, [value, platform.searchURL.regex]);
+    }
+  }, [value, platform]);
 
   return (
     <div className="space-y-2">
@@ -75,13 +97,15 @@ const PlatformInput: FC<{
           </div>
         )}
       </div>
-      <div
-        className="text-[13px] text-secondary mb-2"
-        dangerouslySetInnerHTML={{ __html: platform.searchURL.description }}
-      />
+      {"searchURL" in platform && (
+        <div
+          className="text-[13px] text-secondary mb-2"
+          dangerouslySetInnerHTML={{ __html: platform.searchURL.description }}
+        />
+      )}
       <Input
         type="url"
-        placeholder={`Enter ${platform.name} URL`}
+        placeholder={`Enter ${platform.name} ${"searchURL" in platform ? 'Search': ''} URL`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={clsx(
@@ -101,7 +125,9 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
   id,
   close,
 }) => {
-  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [searchPlatforms, setSearchPlatforms] = useState<SearchPlatform[]>([]);
+  const [linkPlatforms, setLinkPlatforms] = useState<LinkPlatform[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>("search");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const workflowsRequest = useWorkflowsRequest();
@@ -120,12 +146,20 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
     const loadPlatforms = async () => {
       try {
         setIsLoading(true);
-        const { searchLink: data } = await workflowsRequest.importURLList(id);
-        setPlatforms(data);
+        const { searchLink, link } = await workflowsRequest.importURLList(id);
+        setSearchPlatforms(searchLink);
+        setLinkPlatforms(link);
+
+        // Set default tab based on available data
+        if (searchLink.length > 0) {
+          setActiveTab("search");
+        } else if (link.length > 0) {
+          setActiveTab("direct");
+        }
 
         // Initialize form with empty values for each platform
         const initialValues: FormData = {};
-        data.forEach((platform) => {
+        [...searchLink, ...link].forEach((platform) => {
           initialValues[platform.identifier] = "";
         });
         form.reset(initialValues);
@@ -141,20 +175,34 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
     loadPlatforms();
   }, []);
 
+  // Get current platforms based on active tab
+  const currentPlatforms =
+    activeTab === "search" ? searchPlatforms : linkPlatforms;
+
   // Validate that at least one URL is valid
   const validateForm = useCallback(() => {
-    const hasValidURL = platforms.some((platform) => {
+    const hasValidURL = currentPlatforms.some((platform) => {
       const value = formValues[platform.identifier]?.trim();
       if (!value) return false;
 
-      return platform.searchURL.regex.some((regexObj) => {
+      if ("searchURL" in platform) {
+        return platform.searchURL.regex.some((regexObj) => {
+          try {
+            const regex = new RegExp(regexObj.source, regexObj.flag);
+            return regex.test(value);
+          } catch {
+            return false;
+          }
+        });
+      } else if ("link" in platform) {
         try {
-          const regex = new RegExp(regexObj.source, regexObj.flag);
+          const regex = new RegExp(platform.link.source, platform.link.flag);
           return regex.test(value);
         } catch {
           return false;
         }
-      });
+      }
+      return false;
     });
 
     if (!hasValidURL) {
@@ -167,21 +215,31 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
 
     clearErrors("root");
     return true;
-  }, [platforms, formValues, setError, clearErrors]);
+  }, [currentPlatforms, formValues, setError, clearErrors]);
 
   // Check if submit button should be enabled
-  const canSubmit = platforms.some((platform) => {
+  const canSubmit = currentPlatforms.some((platform) => {
     const value = formValues[platform.identifier]?.trim();
     if (!value) return false;
 
-    return platform.searchURL.regex.some((regexObj) => {
+    if ("searchURL" in platform) {
+      return platform.searchURL.regex.some((regexObj) => {
+        try {
+          const regex = new RegExp(regexObj.source, regexObj.flag);
+          return regex.test(value);
+        } catch {
+          return false;
+        }
+      });
+    } else if ("link" in platform) {
       try {
-        const regex = new RegExp(regexObj.source, regexObj.flag);
+        const regex = new RegExp(platform.link.source, platform.link.flag);
         return regex.test(value);
       } catch {
         return false;
       }
-    });
+    }
+    return false;
   });
 
   const onSubmit = useCallback(
@@ -190,12 +248,20 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
 
       setIsSubmitting(true);
       try {
-        // Filter out empty URLs and collect them in an array
-        const urls = Object.values(data)
-          .filter((url) => url.trim())
+        // Filter out empty URLs and collect them in an array for current platforms only
+        const relevantUrls = currentPlatforms
+          .map((platform) => data[platform.identifier])
+          .filter((url) => url?.trim())
           .map((url) => url.trim());
 
-        await workflowsRequest.uploadLeads(id, urls);
+        if (activeTab === "search") {
+          // For search URLs, use the existing 'urls' parameter
+          await workflowsRequest.uploadLeads(id, relevantUrls, []);
+        } else {
+          // For direct profile URLs, use the new 'link' parameter
+          await workflowsRequest.uploadLeads(id, [], relevantUrls);
+        }
+
         toaster.show("URLs imported successfully", "success");
         close();
       } catch (error) {
@@ -205,7 +271,7 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
         setIsSubmitting(false);
       }
     },
-    [validateForm, toaster, close],
+    [validateForm, toaster, close, currentPlatforms, activeTab],
   );
 
   if (isLoading) {
@@ -216,7 +282,7 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
     );
   }
 
-  if (platforms.length === 0) {
+  if (searchPlatforms.length === 0 && linkPlatforms.length === 0) {
     return (
       <div className="text-center">
         <div className="text-[14px] text-secondary mb-[16px]">
@@ -229,17 +295,59 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
     );
   }
 
+  // Only show tabs if both types have platforms
+  const showTabs = searchPlatforms.length > 0 && linkPlatforms.length > 0;
+
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
+          {/* Tabs */}
+          {showTabs && (
+            <div className="mb-[20px]">
+              <div className="flex border-b border-background">
+                {searchPlatforms.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("search")}
+                    className={clsx(
+                      "pr-[16px] py-[8px] text-[14px] font-[600] border-b-2 transition-all",
+                      activeTab === "search"
+                        ? "border-btn-primary text-primary"
+                        : "border-transparent text-secondary hover:text-primary",
+                    )}
+                  >
+                    Social Media Search URL
+                  </button>
+                )}
+                {linkPlatforms.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("direct")}
+                    className={clsx(
+                      "px-[16px] py-[8px] text-[14px] font-[600] border-b-2 transition-all",
+                      activeTab === "direct"
+                        ? "border-btn-primary text-primary"
+                        : "border-transparent text-secondary hover:text-primary",
+                    )}
+                  >
+                    Direct Profile URL
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="text-[14px] text-secondary mb-[20px]">
-            Import URLs from different platforms. Enter URLs that match the
-            required patterns. At least one valid URL is required.
+            {activeTab === "search"
+              ? "Import search URLs from different platforms.\n" +
+                "Enter URLs that match the required patterns.\n"
+              : "Import direct profile URLs from different platforms.\n" +
+                "Enter URLs that match the required patterns"}
           </div>
 
           <div className="space-y-6">
-            {platforms.map((platform) => (
+            {currentPlatforms.map((platform) => (
               <PlatformInput
                 key={platform.identifier}
                 platform={platform}

@@ -93,7 +93,7 @@ const WorkflowRow: FC<{
     (e: React.MouseEvent) => {
       e.stopPropagation();
       modals.show({
-        label: "Import URL List",
+        label: "Import Leads",
         component: (close) => (
           <ImportURLListComponent id={workflow.id} close={close} />
         ),

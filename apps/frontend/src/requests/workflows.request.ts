@@ -152,11 +152,19 @@ export const useWorkflowsRequest = () => {
   );
 
   const uploadLeads = useCallback(
-    async (workflowId: string, urls: string[]) => {
+    async (workflowId: string, urls: string[] = [], link: string[] = []) => {
+      const body: any = {};
+      if (urls.length > 0) {
+        body.urls = urls;
+      }
+      if (link.length > 0) {
+        body.link = link;
+      }
+      
       await fetch(`/workflows/${workflowId}/upload-leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls }),
+        body: JSON.stringify(body),
       });
     },
     [],
