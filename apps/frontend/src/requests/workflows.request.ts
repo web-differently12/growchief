@@ -155,7 +155,7 @@ export const useWorkflowsRequest = () => {
     async (workflowId: string, urls: string[] = [], link: string[] = []) => {
       const body: any = {};
       if (urls.length > 0) {
-        body.urls = urls;
+        body.searchUrl = urls;
       }
       if (link.length > 0) {
         body.link = link;

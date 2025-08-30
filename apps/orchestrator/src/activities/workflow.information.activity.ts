@@ -4,7 +4,6 @@ import { BotsService } from '@growchief/shared-backend/database/bots/bots.servic
 import { WorkflowsService } from '@growchief/shared-backend/database/workflows/workflows.service';
 import { EnrichmentDto } from '@growchief/shared-both/dto/enrichment/enrichment.dto';
 import { WorkflowNodes } from '@growchief/orchestrator/workflows';
-import { EnrichmentManager } from '@growchief/shared-backend/enrichment/enrichment.manager';
 import { botList } from '@growchief/shared-backend/bots/bot.list';
 import { URLService } from '@growchief/shared-both/utils/url.normalize';
 import type { RestrictionType } from '@growchief/shared-backend/temporal/progress.response';
@@ -16,7 +15,6 @@ export class WorkflowInformationActivity {
   constructor(
     private _botsService: BotsService,
     private _workflowService: WorkflowsService,
-    private _enrichmentService: EnrichmentManager,
     private _urlService: URLService,
   ) {}
 
@@ -93,7 +91,7 @@ export class WorkflowInformationActivity {
           })
         : [];
 
-      const lead = await this._enrichmentService.processEnrichment(
+      const lead = await this._workflowService.processEnrichment(
         workflow.organizationId,
         workflowId,
         data.account.platform,

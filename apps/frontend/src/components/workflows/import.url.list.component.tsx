@@ -33,7 +33,7 @@ interface ImportURLListComponentProps {
   close: () => void;
 }
 
-type TabType = "search" | "direct";
+type TabType = "search" | "direct" | "csv";
 
 const PlatformInput: FC<{
   platform: SearchPlatform | LinkPlatform;
@@ -84,13 +84,13 @@ const PlatformInput: FC<{
               "px-[8px] py-[2px] rounded-full text-[11px] font-[600] inline-flex items-center",
               isValid
                 ? "bg-green-600/20 text-green-400"
-                : "bg-red-600/20 text-red-400",
+                : "bg-red-600/20 text-red-400"
             )}
           >
             <div
               className={clsx(
                 "w-[6px] h-[6px] rounded-full mr-[6px]",
-                isValid ? "bg-green-400" : "bg-red-400",
+                isValid ? "bg-green-400" : "bg-red-400"
               )}
             />
             {isValid ? "Valid" : "Invalid"}
@@ -105,7 +105,7 @@ const PlatformInput: FC<{
       )}
       <Input
         type="url"
-        placeholder={`Enter ${platform.name} ${"searchURL" in platform ? 'Search': ''} URL`}
+        placeholder={`Enter ${platform.name} ${"searchURL" in platform ? "Search" : ""} URL`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={clsx(
@@ -113,9 +113,161 @@ const PlatformInput: FC<{
           value.trim() &&
             (isValid
               ? "border-green-600/50 focus:border-green-600 focus:ring-green-600/20"
-              : "border-red-600/50 focus:border-red-600 focus:ring-red-600/20"),
+              : "border-red-600/50 focus:border-red-600 focus:ring-red-600/20")
         )}
       />
+      {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
+    </div>
+  );
+};
+
+const PlatformCSVUploadComponent: FC<{
+  platform: LinkPlatform;
+  file: File | null;
+  onChange: (file: File | null) => void;
+  onValidationChange: (
+    validation: { total: number; valid: number } | null
+  ) => void;
+  validationInfo: { total: number; valid: number } | null;
+  error?: string;
+}> = ({
+  platform,
+  file,
+  onChange,
+  onValidationChange,
+  validationInfo,
+  error,
+}) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      // Validate file type
+      if (
+        selectedFile.type !== "text/csv" &&
+        !selectedFile.name.endsWith(".csv")
+      ) {
+        onChange(null);
+        onValidationChange(null);
+        return;
+      }
+      onChange(selectedFile);
+      validateCSVFile(selectedFile);
+    } else {
+      onChange(null);
+      onValidationChange(null);
+    }
+  };
+
+  const validateCSVFile = async (file: File) => {
+    try {
+      // Parse CSV to get all URLs
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const text = event.target?.result as string;
+          const lines = text
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line);
+
+          const urls: string[] = [];
+          lines.forEach((line) => {
+            if (line.includes(",")) {
+              const values = line
+                .split(",")
+                .map((v) => v.trim().replace(/['"]/g, ""))
+                .filter((v) => v);
+              urls.push(...values);
+            } else {
+              urls.push(line.replace(/['"]/g, ""));
+            }
+          });
+
+          const httpUrls = urls.filter((url) => url.startsWith("http"));
+          const platformRegex = new RegExp(
+            platform.link.source,
+            platform.link.flag
+          );
+          const validUrls = httpUrls.filter((url) => platformRegex.test(url));
+
+          onValidationChange({
+            total: httpUrls.length,
+            valid: validUrls.length,
+          });
+        } catch (error) {
+          onValidationChange(null);
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      onValidationChange(null);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[16px] font-[600] text-primary">
+          {platform.name} CSV Upload
+        </h3>
+        {file && validationInfo && (
+          <div
+            className={clsx(
+              "px-[8px] py-[2px] rounded-full text-[11px] font-[600] inline-flex items-center",
+              validationInfo.valid > 0
+                ? "bg-green-600/20 text-green-400"
+                : "bg-yellow-600/20 text-yellow-400"
+            )}
+          >
+            <div
+              className={clsx(
+                "w-[6px] h-[6px] rounded-full mr-[6px]",
+                validationInfo.valid > 0 ? "bg-green-400" : "bg-yellow-400"
+              )}
+            />
+            {validationInfo.valid}/{validationInfo.total} Valid
+          </div>
+        )}
+        {file && !validationInfo && (
+          <div className="px-[8px] py-[2px] rounded-full text-[11px] font-[600] inline-flex items-center bg-blue-600/20 text-blue-400">
+            <div className="w-[6px] h-[6px] rounded-full mr-[6px] bg-blue-400" />
+            Processing...
+          </div>
+        )}
+      </div>
+      <div className="text-[13px] text-secondary mb-2 whitespace-pre-line">
+        Upload a CSV file containing {platform.name} profile URLs.{"\n"}
+        Each URL should be on a separate line or in a single column.
+      </div>
+      <div className="space-y-2">
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          onChange={handleFileChange}
+          className="block w-full text-[14px] text-primary file:mr-4 file:py-2 file:px-4 file:rounded-[6px] file:border-0 file:text-[12px] file:font-[600] file:bg-btn-primary file:text-white hover:file:bg-btn-primary/90 file:cursor-pointer cursor-pointer"
+        />
+        {file && (
+          <div className="text-[12px] text-secondary space-y-1">
+            <div>
+              Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
+            </div>
+            {validationInfo && (
+              <div
+                className={clsx(
+                  "text-[11px]",
+                  validationInfo.valid > 0
+                    ? "text-green-400"
+                    : "text-yellow-400"
+                )}
+              >
+                {validationInfo.valid > 0
+                  ? `✓ ${validationInfo.valid} URLs match ${platform.name} format`
+                  : `⚠ No URLs match ${platform.name} format (${validationInfo.total} found)`}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
     </div>
   );
@@ -128,6 +280,12 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
   const [searchPlatforms, setSearchPlatforms] = useState<SearchPlatform[]>([]);
   const [linkPlatforms, setLinkPlatforms] = useState<LinkPlatform[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>("search");
+  const [csvFiles, setCsvFiles] = useState<{
+    [platformId: string]: File | null;
+  }>({});
+  const [csvValidation, setCsvValidation] = useState<{
+    [platformId: string]: { total: number; valid: number } | null;
+  }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const workflowsRequest = useWorkflowsRequest();
@@ -181,6 +339,30 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
 
   // Validate that at least one URL is valid
   const validateForm = useCallback(() => {
+    if (activeTab === "csv") {
+      // For CSV tab, check if at least one platform has valid URLs
+      const hasValidUrls = linkPlatforms.some((platform) => {
+        const validation = csvValidation[platform.identifier];
+        return validation && validation.valid > 0;
+      });
+
+      if (!hasValidUrls) {
+        const hasFiles = linkPlatforms.some(
+          (platform) => csvFiles[platform.identifier]
+        );
+
+        setError("root", {
+          type: "manual",
+          message: hasFiles
+            ? "No valid URLs found in CSV files that match platform requirements"
+            : "Please select at least one CSV file to upload",
+        });
+        return false;
+      }
+      clearErrors("root");
+      return true;
+    }
+
     const hasValidURL = currentPlatforms.some((platform) => {
       const value = formValues[platform.identifier]?.trim();
       if (!value) return false;
@@ -215,32 +397,88 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
 
     clearErrors("root");
     return true;
-  }, [currentPlatforms, formValues, setError, clearErrors]);
+  }, [
+    currentPlatforms,
+    formValues,
+    setError,
+    clearErrors,
+    activeTab,
+    csvFiles,
+    csvValidation,
+    linkPlatforms,
+  ]);
 
   // Check if submit button should be enabled
-  const canSubmit = currentPlatforms.some((platform) => {
-    const value = formValues[platform.identifier]?.trim();
-    if (!value) return false;
+  const canSubmit =
+    activeTab === "csv"
+      ? linkPlatforms.some((platform) => {
+          const validation = csvValidation[platform.identifier];
+          return validation && validation.valid > 0;
+        })
+      : currentPlatforms.some((platform) => {
+          const value = formValues[platform.identifier]?.trim();
+          if (!value) return false;
 
-    if ("searchURL" in platform) {
-      return platform.searchURL.regex.some((regexObj) => {
-        try {
-          const regex = new RegExp(regexObj.source, regexObj.flag);
-          return regex.test(value);
-        } catch {
+          if ("searchURL" in platform) {
+            return platform.searchURL.regex.some((regexObj) => {
+              try {
+                const regex = new RegExp(regexObj.source, regexObj.flag);
+                return regex.test(value);
+              } catch {
+                return false;
+              }
+            });
+          } else if ("link" in platform) {
+            try {
+              const regex = new RegExp(
+                platform.link.source,
+                platform.link.flag
+              );
+              return regex.test(value);
+            } catch {
+              return false;
+            }
+          }
           return false;
+        });
+
+  // Function to parse CSV file
+  const parseCSV = (file: File): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const text = event.target?.result as string;
+          const lines = text
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line);
+
+          // Try to parse as CSV - handle both single column and comma-separated values
+          const urls: string[] = [];
+          lines.forEach((line) => {
+            if (line.includes(",")) {
+              // Split by comma and take all values
+              const values = line
+                .split(",")
+                .map((v) => v.trim().replace(/['"]/g, ""))
+                .filter((v) => v);
+              urls.push(...values);
+            } else {
+              // Single value per line
+              urls.push(line.replace(/['"]/g, ""));
+            }
+          });
+
+          resolve(urls.filter((url) => url.startsWith("http")));
+        } catch (error) {
+          reject(error);
         }
-      });
-    } else if ("link" in platform) {
-      try {
-        const regex = new RegExp(platform.link.source, platform.link.flag);
-        return regex.test(value);
-      } catch {
-        return false;
-      }
-    }
-    return false;
-  });
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsText(file);
+    });
+  };
 
   const onSubmit = useCallback(
     async (data: FormData) => {
@@ -248,18 +486,67 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
 
       setIsSubmitting(true);
       try {
-        // Filter out empty URLs and collect them in an array for current platforms only
-        const relevantUrls = currentPlatforms
-          .map((platform) => data[platform.identifier])
-          .filter((url) => url?.trim())
-          .map((url) => url.trim());
+        if (activeTab === "csv") {
+          // Parse all CSV files and extract URLs, filtering by platform regex
+          const allCsvUrls: string[] = [];
+          let totalProcessedUrls = 0;
 
-        if (activeTab === "search") {
-          // For search URLs, use the existing 'urls' parameter
-          await workflowsRequest.uploadLeads(id, relevantUrls, []);
+          for (const platform of linkPlatforms) {
+            const file = csvFiles[platform.identifier];
+            if (file) {
+              const csvUrls = await parseCSV(file);
+              totalProcessedUrls += csvUrls.length;
+
+              // Filter URLs that match this platform's regex
+              const platformRegex = new RegExp(
+                platform.link.source,
+                platform.link.flag
+              );
+              const validUrlsForPlatform = csvUrls.filter((url) =>
+                platformRegex.test(url)
+              );
+
+              allCsvUrls.push(...validUrlsForPlatform);
+            }
+          }
+
+          if (allCsvUrls.length === 0) {
+            if (totalProcessedUrls > 0) {
+              toaster.show(
+                "No URLs matched the platform requirements in CSV files",
+                "warning"
+              );
+            } else {
+              toaster.show("No valid URLs found in CSV files", "warning");
+            }
+            setIsSubmitting(false);
+            return;
+          }
+
+          // Show success message with filtering info
+          if (totalProcessedUrls > allCsvUrls.length) {
+            toaster.show(
+              `${allCsvUrls.length} out of ${totalProcessedUrls} URLs matched platform requirements`,
+              "success"
+            );
+          }
+
+          // For CSV uploads, use the 'link' parameter (direct URLs)
+          await workflowsRequest.uploadLeads(id, [], allCsvUrls);
         } else {
-          // For direct profile URLs, use the new 'link' parameter
-          await workflowsRequest.uploadLeads(id, [], relevantUrls);
+          // Filter out empty URLs and collect them in an array for current platforms only
+          const relevantUrls = currentPlatforms
+            .map((platform) => data[platform.identifier])
+            .filter((url) => url?.trim())
+            .map((url) => url.trim());
+
+          if (activeTab === "search") {
+            // For search URLs, use the existing 'urls' parameter
+            await workflowsRequest.uploadLeads(id, relevantUrls, []);
+          } else {
+            // For direct profile URLs, use the new 'link' parameter
+            await workflowsRequest.uploadLeads(id, [], relevantUrls);
+          }
         }
 
         toaster.show("URLs imported successfully", "success");
@@ -271,7 +558,15 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
         setIsSubmitting(false);
       }
     },
-    [validateForm, toaster, close, currentPlatforms, activeTab],
+    [
+      validateForm,
+      toaster,
+      close,
+      currentPlatforms,
+      activeTab,
+      csvFiles,
+      linkPlatforms,
+    ]
   );
 
   if (isLoading) {
@@ -295,8 +590,12 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
     );
   }
 
-  // Only show tabs if both types have platforms
-  const showTabs = searchPlatforms.length > 0 && linkPlatforms.length > 0;
+  // Show tabs if we have multiple options (CSV only available when link platforms exist)
+  const showTabs =
+    (searchPlatforms.length > 0 ? 1 : 0) +
+      (linkPlatforms.length > 0 ? 1 : 0) +
+      (linkPlatforms.length > 0 ? 1 : 0) > // +1 for CSV tab only if link platforms exist
+    1;
 
   return (
     <FormProvider {...form}>
@@ -314,7 +613,7 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
                       "pr-[16px] py-[8px] text-[14px] font-[600] border-b-2 transition-all",
                       activeTab === "search"
                         ? "border-btn-primary text-primary"
-                        : "border-transparent text-secondary hover:text-primary",
+                        : "border-transparent text-secondary hover:text-primary"
                     )}
                   >
                     Social Media Search URL
@@ -328,10 +627,24 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
                       "px-[16px] py-[8px] text-[14px] font-[600] border-b-2 transition-all",
                       activeTab === "direct"
                         ? "border-btn-primary text-primary"
-                        : "border-transparent text-secondary hover:text-primary",
+                        : "border-transparent text-secondary hover:text-primary"
                     )}
                   >
                     Direct Profile URL
+                  </button>
+                )}
+                {linkPlatforms.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("csv")}
+                    className={clsx(
+                      "px-[16px] py-[8px] text-[14px] font-[600] border-b-2 transition-all",
+                      activeTab === "csv"
+                        ? "border-btn-primary text-primary"
+                        : "border-transparent text-secondary hover:text-primary"
+                    )}
+                  >
+                    Upload CSV
                   </button>
                 )}
               </div>
@@ -342,19 +655,43 @@ export const ImportURLListComponent: FC<ImportURLListComponentProps> = ({
             {activeTab === "search"
               ? "Import search URLs from different platforms.\n" +
                 "Enter URLs that match the required patterns.\n"
-              : "Import direct profile URLs from different platforms.\n" +
-                "Enter URLs that match the required patterns"}
+              : activeTab === "direct"
+                ? "Import direct profile URLs from different platforms.\n" +
+                  "Enter URLs that match the required patterns"
+                : "Upload a CSV file containing profile URLs for available social media platforms.\n" +
+                  "The file should have one URL per line or URLs in a single column."}
           </div>
 
           <div className="space-y-6">
-            {currentPlatforms.map((platform) => (
-              <PlatformInput
-                key={platform.identifier}
-                platform={platform}
-                value={formValues[platform.identifier] || ""}
-                onChange={(value) => setValue(platform.identifier, value)}
-              />
-            ))}
+            {activeTab === "csv"
+              ? linkPlatforms.map((platform) => (
+                  <PlatformCSVUploadComponent
+                    key={platform.identifier}
+                    platform={platform}
+                    file={csvFiles[platform.identifier] || null}
+                    validationInfo={csvValidation[platform.identifier] || null}
+                    onChange={(file) =>
+                      setCsvFiles((prev) => ({
+                        ...prev,
+                        [platform.identifier]: file,
+                      }))
+                    }
+                    onValidationChange={(validation) =>
+                      setCsvValidation((prev) => ({
+                        ...prev,
+                        [platform.identifier]: validation,
+                      }))
+                    }
+                  />
+                ))
+              : currentPlatforms.map((platform) => (
+                  <PlatformInput
+                    key={platform.identifier}
+                    platform={platform}
+                    value={formValues[platform.identifier] || ""}
+                    onChange={(value) => setValue(platform.identifier, value)}
+                  />
+                ))}
           </div>
 
           {form.formState.errors.root && (

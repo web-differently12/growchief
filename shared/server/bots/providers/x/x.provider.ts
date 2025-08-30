@@ -23,6 +23,7 @@ export class XProvider extends BotAbstract {
   urlRegex = /https:\/\/x\.com\/(.*?)/;
   isWWW = false;
   searchURL = undefined;
+  order = 2;
 
   async accountLimited(
     params: ParamsValue,

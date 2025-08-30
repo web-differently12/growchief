@@ -14,6 +14,12 @@ import {
 import { BotsService } from '@growchief/shared-backend/database/bots/bots.service';
 import { uniq } from 'lodash';
 import { botList } from '@growchief/shared-backend/bots/bot.list';
+import { UploadLeadsDto } from '@growchief/shared-both/dto/workflows/upload.leads.dto';
+import { URLService } from '@growchief/shared-both/utils/url.normalize';
+import { LeadsService } from '@growchief/shared-backend/database/leads/leads.service';
+import { providerList } from '@growchief/shared-backend/enrichment/provider.list';
+import { awaitedTryCatch } from '@growchief/shared-both/utils/awaited.try.catch';
+import { workflowCampaign } from '@growchief/orchestrator/workflows';
 
 @Injectable()
 export class WorkflowsService {
@@ -21,6 +27,8 @@ export class WorkflowsService {
     private _workflowsRepository: WorkflowsRepository,
     private _temporal: TemporalService,
     private _botsService: BotsService,
+    private _urlService: URLService,
+    private _leadsService: LeadsService,
   ) {}
 
   static mapNodes(
@@ -59,7 +67,8 @@ export class WorkflowsService {
     return this._workflowsRepository.getWorkflowsByOrganization(organizationId);
   }
 
-  async uploadLeads(wid: string, orgId: string, urls: string[]) {
+  async uploadLeads(wid: string, orgId: string, body: UploadLeadsDto) {
+    const { link, searchUrl } = body;
     const workflow = await this.getWorkflowAccounts(wid, orgId);
     if (!workflow) {
       return { error: 'Workflow not found or not active' };
@@ -75,11 +84,57 @@ export class WorkflowsService {
     );
 
     for (const account of accounts) {
-      if (!account.platform.searchURL) {
+      const urlLinks = link?.length
+        ? link.map((url) => {
+            const normalized = this._urlService.normalizeUrlSafe(url);
+            if (account.platform.isWWW) {
+              return normalized.indexOf('//www.') === -1
+                ? normalized.replace('://', '://www.')
+                : normalized;
+            } else {
+              return normalized.replace('://www.', '://');
+            }
+          })
+        : [];
+
+      if (urlLinks.length) {
+        const filterUrls = urlLinks.filter((p) =>
+          p.match(account.platform.urlRegex),
+        );
+
+        if (filterUrls.length) {
+          await this._temporal
+            .getClient()
+            .getRawClient()
+            ?.workflow.start('workflowCampaign', {
+              args: [
+                {
+                  workflowId: wid,
+                  orgId,
+                  body: { urls: filterUrls },
+                },
+              ],
+              workflowId: `campaign-${wid}-${makeId(20)}`,
+              taskQueue: 'main',
+              typedSearchAttributes: new TypedSearchAttributes([
+                {
+                  key: organizationId,
+                  value: orgId,
+                },
+              ]),
+              retry: {
+                maximumAttempts: 1,
+              },
+            });
+        }
         continue;
       }
 
-      const matchUrl = urls.find((p) =>
+      if (!searchUrl || !searchUrl?.length) {
+        continue;
+      }
+
+      const matchUrl = searchUrl.find((p) =>
         (account?.platform?.searchURL?.regex || []).some((r) => p.match(r)),
       );
 
@@ -139,6 +194,7 @@ export class WorkflowsService {
         .map((platform: string) => {
           return botList.find((p) => p.identifier === platform && p.urlRegex)!;
         })
+        .sort((a, b) => a.order - b.order)
         .map((p) => {
           return {
             name: p.label,
@@ -154,6 +210,7 @@ export class WorkflowsService {
           return botList.find((p) => p.identifier === platform && p.searchURL)!;
         })
         .filter((p) => p)
+        .sort((a, b) => a.order - b.order)
         .map((p) => {
           return {
             name: p.label,
@@ -344,15 +401,107 @@ export class WorkflowsService {
           maximumAttempts: 1,
         },
       });
-    // try {
-    //   await this._temporal.startWorkflow('userActionThrottler', [], {
-    //     workflowId: 'user-throttler-' + botId,
-    //     taskQueue: 'main',
-    //     workflowIdReusePolicy: WorkflowIdReusePolicy.REJECT_DUPLICATE,
-    //     retry: {
-    //       maximumAttempts: 1,
-    //     },
-    //   });
-    // } catch (err) {}
+  }
+
+  async processEnrichment(
+    organizationId: string,
+    workflowId: string,
+    platform: string,
+    enrichment: EnrichmentDto,
+    forceEnrichment = false,
+  ) {
+    const getLead = await this._leadsService.getLead(
+      platform,
+      organizationId,
+      workflowId,
+      enrichment,
+    );
+
+    if (getLead) {
+      return getLead;
+    }
+
+    for (const provider of providerList.filter((f) =>
+      f.supportedIdentifiers.includes(platform),
+    )) {
+      const tool = botList.find((p) => p.identifier === platform)!;
+
+      if (enrichment?.urls?.length && !forceEnrichment) {
+        const findUrl = enrichment.urls.find((p) => p.match(tool.urlRegex));
+        if (findUrl) {
+          const createdLead = await this._leadsService.createLead(
+            organizationId,
+            workflowId,
+            platform,
+            { ...enrichment, url: findUrl },
+          );
+
+          await this._leadsService.addLeadToWorkflow(
+            organizationId,
+            workflowId,
+            createdLead.id,
+          );
+
+          return createdLead;
+        }
+      }
+
+      const lead = await awaitedTryCatch(() =>
+        provider.enrich(platform, enrichment),
+      );
+
+      if (!lead) {
+        continue;
+      }
+
+      lead.url = this._urlService.normalizeUrlSafe(lead.url);
+      if (tool.isWWW) {
+        lead.url =
+          lead.url.indexOf('//www.') === -1
+            ? lead.url.replace('://', '://www.')
+            : lead.url;
+      } else {
+        lead.url = lead.url.replace('://www.', '://');
+      }
+
+      const createdLead = await this._leadsService.createLead(
+        organizationId,
+        workflowId,
+        platform,
+        { ...lead, ...enrichment },
+      );
+
+      await this._leadsService.addLeadToWorkflow(
+        organizationId,
+        workflowId,
+        createdLead.id,
+      );
+
+      return createdLead;
+    }
+  }
+
+  async startWorkflow(organizationId: string, id: string, body: EnrichmentDto) {
+    const getWorkflow = await this.getWorkflow(id, organizationId);
+    if (!getWorkflow) {
+      return {
+        status: 'error',
+        message: 'Workflow not found',
+      };
+    }
+
+    if (!getWorkflow.active) {
+      return {
+        status: 'error',
+        message: 'Workflow is not active',
+      };
+    }
+
+    await this.startBotWorkflow(organizationId, id, body);
+
+    return {
+      status: 'success',
+      message: 'Workflow started successfully',
+    };
   }
 }

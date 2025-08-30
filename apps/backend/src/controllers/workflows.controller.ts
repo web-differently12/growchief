@@ -12,6 +12,7 @@ import { GetOrganizationFromRequest } from '@growchief/backend/services/auth/org
 import type { Organization } from '@prisma/client';
 import { UpdateWorkflow } from '@growchief/shared-both/dto/platforms/update.workflow.dto';
 import { SubscriptionRequired } from '@growchief/shared-backend/billing/billing.guard';
+import { UploadLeadsDto } from '@growchief/shared-both/dto/workflows/upload.leads.dto';
 
 @SubscriptionRequired()
 @Controller('/workflows')
@@ -26,10 +27,10 @@ export class WorkflowsController {
   @Post('/:id/upload-leads')
   async uploadLeads(
     @Param('id') id: string,
-    @Body('urls') urls: string[],
+    @Body() body: UploadLeadsDto,
     @GetOrganizationFromRequest() organization: Organization,
   ) {
-    return this._workflowsService.uploadLeads(id, organization.id, urls);
+    return this._workflowsService.uploadLeads(id, organization.id, body);
   }
 
   @Get('/:id/import-url-list')

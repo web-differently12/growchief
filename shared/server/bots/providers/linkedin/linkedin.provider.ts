@@ -51,6 +51,7 @@ export class LinkedinProvider extends BotAbstract {
   preventLoadingImages = false;
   headful = true;
   urlRegex = /https:\/\/www\.linkedin\.com\/in\/(.*)/;
+  order = 1;
   isWWW = true;
   searchURL = {
     description:

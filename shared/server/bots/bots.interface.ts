@@ -48,6 +48,7 @@ export abstract class BotAbstract {
   abstract delay: number;
   abstract preventLoadingImages: boolean;
   abstract urlRegex: RegExp;
+  abstract order: number;
   abstract isWWW: boolean;
   abstract searchURL?: {
     description: string;
