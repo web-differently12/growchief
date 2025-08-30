@@ -130,6 +130,14 @@ export const useWorkflowsRequest = () => {
     async (id: string) => {
       const res = await fetch(`/workflows/${id}/import-url-list`);
       return res.json() as Promise<{
+        link: Array<{
+          name: string;
+          identifier: string;
+          link: {
+            source: string;
+            flag: string;
+          };
+        }>;
         searchLink: Array<{
           name: string;
           identifier: string;
