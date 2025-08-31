@@ -10,6 +10,10 @@ import { ProxiesManager } from '@growchief/shared-backend/proxies/proxies.manage
 import { organizationId as orgId } from '@growchief/shared-backend/temporal/temporal.search.attribute';
 import { botJobsQueries } from '@growchief/orchestrator/queries/bot.jobs.queries';
 import { awaitedTryCatch } from '@growchief/shared-both/utils/awaited.try.catch';
+import {
+  isWithinWorkingHours,
+  getTimeUntilWorkingHours,
+} from '@growchief/shared-both/utils/time.functions';
 @Injectable()
 export class BotsService {
   constructor(
@@ -368,6 +372,27 @@ export class BotsService {
   }
 
   async getBotStatus(organizationId: string, botId: string): Promise<any> {
+    // Get bot details for working hours and restrictions
+    const bot = await this._botsRepository.getBotById(botId, organizationId);
+    if (!bot) {
+      return { found: false, error: 'Bot not found' };
+    }
+
+    // Check working hours
+    const workingHours = JSON.parse(
+      bot.workingHours ||
+        '[[540,1020],[540,1020],[540,1020],[540,1020],[540,960],[],[]]',
+    );
+    const isWithinHours = isWithinWorkingHours(workingHours, bot.timezone);
+    const timeUntilWorkingHours = !isWithinHours
+      ? getTimeUntilWorkingHours(workingHours, bot.timezone)
+      : 0;
+
+    // Check for active restrictions
+    const activeRestrictions =
+      await this._botsRepository.getActiveRestrictions(botId);
+
+    // Get temporal workflow status
     const handle = await this._temporal
       .getClient()
       .getWorkflowHandle(`user-throttler-${botId}`);
@@ -375,7 +400,17 @@ export class BotsService {
     const workflow = await awaitedTryCatch(() => handle.describe());
 
     if (!workflow) {
-      return { found: false };
+      return {
+        found: false,
+        workingHours: {
+          isWithinHours,
+          timeUntilWorkingHours:
+            timeUntilWorkingHours > 0
+              ? new Date(Date.now() + timeUntilWorkingHours)
+              : null,
+        },
+        restrictions: activeRestrictions,
+      };
     }
 
     if (workflow?.typedSearchAttributes?.get(orgId) !== organizationId) {
@@ -384,9 +419,42 @@ export class BotsService {
 
     const query = await handle.query(botJobsQueries);
     if (query) {
-      return query;
+      // Get workflow and step details
+      let stepDetails: any = null;
+      if (query.workflowId && query.stepId) {
+        stepDetails = await this._botsRepository.getWorkflowStepDetails(
+          query.workflowId,
+          query.stepId,
+          organizationId,
+        );
+      }
+
+      return {
+        ...query,
+        workingHours: {
+          isWithinHours,
+          timeUntilWorkingHours:
+            timeUntilWorkingHours > 0
+              ? new Date(Date.now() + timeUntilWorkingHours)
+              : null,
+        },
+        restrictions: activeRestrictions,
+        stepDetails,
+        when: query.when,
+        found: true,
+      };
     }
 
-    return { found: false };
+    return {
+      found: false,
+      workingHours: {
+        isWithinHours,
+        timeUntilWorkingHours:
+          timeUntilWorkingHours > 0
+            ? new Date(Date.now() + timeUntilWorkingHours)
+            : null,
+      },
+      restrictions: activeRestrictions,
+    };
   }
 }

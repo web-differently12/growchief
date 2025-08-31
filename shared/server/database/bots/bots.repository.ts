@@ -15,6 +15,7 @@ export class BotsRepository {
     private _bot: PrismaRepository<'bot'>,
     private _activity: PrismaRepository<'activity'>,
     private _workflows: PrismaRepository<'workflows'>,
+    private _workflowNodes: PrismaRepository<'workflowNodes'>,
     private _restrictions: PrismaRepository<'restrictions'>,
     private _prisma: PrismaService,
   ) {}
@@ -497,5 +498,71 @@ export class BotsRepository {
         until: date,
       },
     });
+  }
+
+  async getActiveRestrictions(botId: string) {
+    return this._restrictions.model.restrictions.findMany({
+      where: {
+        botId,
+        until: {
+          gt: dayjs().utc().toDate(),
+        },
+      },
+      select: {
+        methodName: true,
+        until: true,
+      },
+      orderBy: {
+        until: 'asc',
+      },
+    });
+  }
+
+  async getWorkflowStepDetails(workflowId: string, stepId: string, organizationId: string) {
+    const step = await this._workflowNodes.model.workflowNodes.findFirst({
+      where: {
+        id: stepId,
+        workflowId,
+        organizationId,
+        deletedAt: null,
+      },
+      include: {
+        workflow: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!step) {
+      return null;
+    }
+
+    const data = JSON.parse(step.data || '{}');
+    
+    return {
+      stepName: this._getStepDisplayName(step.type, data),
+      workflowName: step.workflow.name,
+      stepType: step.type,
+      data,
+    };
+  }
+
+  private _getStepDisplayName(type: string, data: any): string {
+    switch (type) {
+      case 'linkedin-connection-request':
+        return 'LinkedIn Connection Request';
+      case 'linkedin-send-message':
+        return 'LinkedIn Send Message';
+      case 'x-send-message':
+        return 'X/Twitter Send Message';
+      case 'delay':
+        return `Delay (${data.delay || 0}s)`;
+      default:
+        return type.split('-').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    }
   }
 }

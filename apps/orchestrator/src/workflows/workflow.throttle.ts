@@ -101,7 +101,7 @@ export async function userWorkflowThrottler({
     return {
       stepId: q[0].stepId,
       workflowId: q[0].workflowId,
-      when: nextAllowedAt || 0,
+      when: currentNextAllowedAt,
     };
   });
 

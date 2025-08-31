@@ -7,9 +7,13 @@ export const useStatus = (id: string) => {
   const fetch = useFetch();
   const status = useCallback(async () => {
     return (await fetch(`/bots/status/${id}`)).json();
-  }, [fetch]);
+  }, [fetch, id]);
 
-  return useSWR(`bot-status-${id}`, status, { refreshInterval: 600000 });
+  return useSWR(`bot-status-${id}`, status, { 
+    refreshInterval: 30000, // Refresh every 30 seconds
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true 
+  });
 };
 
 export const useAccountsRequest = () => {
