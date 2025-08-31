@@ -80,31 +80,28 @@ const Account: FC<SideMenuProps> = ({ nodeId }) => {
     [nodeId, updateNode, selectedGroupId, availableProfiles],
   );
 
-  const handleAddAccount = useCallback(
-    async (group: any) => {
-      try {
-        await accountsRequest.canAddAccount();
-        modals.show({
-          label: `Add Account to group: ${group.name}`,
-          component: (close) => (
-            <GroupContext.Provider value={{ group }}>
-              <AddAccountComponent
-                close={close}
-                mutate={async () => {
-                  await mutate();
-                  // Reset selections after adding account
-                  setSelectedGroupId("");
-                }}
-              />
-            </GroupContext.Provider>
-          ),
-        });
-      } catch (error) {
-        console.error("Failed to add account:", error);
-      }
-    },
-    [],
-  );
+  const handleAddAccount = useCallback(async (group: any) => {
+    try {
+      await accountsRequest.canAddAccount();
+      modals.show({
+        label: `Add Account to group: ${group.name}`,
+        component: (close) => (
+          <GroupContext.Provider value={{ group }}>
+            <AddAccountComponent
+              close={close}
+              mutate={async () => {
+                await mutate();
+                // Reset selections after adding account
+                setSelectedGroupId("");
+              }}
+            />
+          </GroupContext.Provider>
+        ),
+      });
+    } catch (error) {
+      console.error("Failed to add account:", error);
+    }
+  }, []);
 
   if (nodes.length > 1) {
     return <style>{`.render-settings {display: none}`}</style>;
@@ -236,7 +233,7 @@ const Account: FC<SideMenuProps> = ({ nodeId }) => {
         {selectedGroupId && availableProfiles.length === 0 && (
           <div className="mt-[8px]">
             <div className="text-[12px] text-secondary mb-[8px]">
-              {selectedGroup?.bots?.length > 0
+              {(selectedGroup?.bots?.length || 0) > 0
                 ? "All accounts in this group are already being used"
                 : "No accounts available in this group"}
             </div>
