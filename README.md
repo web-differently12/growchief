@@ -28,7 +28,7 @@
 </div>
 <p align="center">
   <br />
-  <a href="https://growchief.com" rel="dofollow"><strong>Explore the docs »</strong></a>
+  <a href="https://docs.growchief.com" rel="dofollow"><strong>Explore the docs »</strong></a>
   <br />
 </p>
 <p align="center">
