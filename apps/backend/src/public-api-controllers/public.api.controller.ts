@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { EnrichmentDto } from '@growchief/shared-both/dto/enrichment/enrichment.dto';
 import { GetOrganizationFromRequest } from '@growchief/backend/services/auth/org.from.request';
 import type { Organization } from '@prisma/client';
@@ -13,5 +13,10 @@ export class PublicApiController {
     @Body() body: EnrichmentDto,
   ) {
     return this._workflowService.startWorkflow(organization.id, id, body);
+  }
+
+  @Get('/workflows')
+  getWorkflows(@GetOrganizationFromRequest() organization: Organization) {
+    return this._workflowService.getWorkflows(organization.id);
   }
 }
