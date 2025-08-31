@@ -28,6 +28,8 @@
 </div>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/n8n-nodes-growchief">N8N node</a>
+  ·
   <a href="https://platform.growchief.com">Register</a>
   ·
   <a href="https://discord.growchief.com">Join Our Discord (devs only)</a>
