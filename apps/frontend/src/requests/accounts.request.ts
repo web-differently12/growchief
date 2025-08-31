@@ -3,6 +3,15 @@ import { useCallback } from "react";
 import useSWR from "swr";
 import type { Bot, BotGroup } from "@prisma/client";
 
+export const useStatus = (id: string) => {
+  const fetch = useFetch();
+  const status = useCallback(async () => {
+    return (await fetch(`/bots/status/${id}`)).json();
+  }, [fetch]);
+
+  return useSWR(`bot-status-${id}`, status, { refreshInterval: 600000 });
+};
+
 export const useAccountsRequest = () => {
   const fetch = useFetch();
 

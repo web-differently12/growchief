@@ -9,6 +9,7 @@ import { ProxiesService } from '@growchief/shared-backend/database/proxies/proxi
 import { ProxiesManager } from '@growchief/shared-backend/proxies/proxies.manager';
 import { organizationId as orgId } from '@growchief/shared-backend/temporal/temporal.search.attribute';
 import { botJobsQueries } from '@growchief/orchestrator/queries/bot.jobs.queries';
+import { awaitedTryCatch } from '@growchief/shared-both/utils/awaited.try.catch';
 @Injectable()
 export class BotsService {
   constructor(
@@ -371,11 +372,12 @@ export class BotsService {
       .getClient()
       .getWorkflowHandle(`user-throttler-${botId}`);
 
-    if (!handle) {
+    const workflow = await awaitedTryCatch(() => handle.describe());
+
+    if (!workflow) {
       return { found: false };
     }
 
-    const workflow = await handle.describe();
     if (workflow?.typedSearchAttributes?.get(orgId) !== organizationId) {
       return { found: false };
     }

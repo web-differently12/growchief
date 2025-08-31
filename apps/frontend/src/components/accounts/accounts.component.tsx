@@ -20,6 +20,7 @@ import { ClockIcon } from "@growchief/frontend/components/icons/clock.icon.tsx";
 import { MoveIcon } from "@growchief/frontend/components/icons/move.icon.tsx";
 import { ProxyIcon } from "@growchief/frontend/components/icons/proxy.icon.tsx";
 import { createToolTip } from "@growchief/frontend/utils/create.tool.tip.tsx";
+import { NextActionComponent } from "@growchief/frontend/components/accounts/next.action.component.tsx";
 
 const StatusBadge: FC<{ status: string; logged: boolean }> = ({
   status,
@@ -36,13 +37,13 @@ const StatusBadge: FC<{ status: string; logged: boolean }> = ({
           ? "bg-menu text-text-menu"
           : isPaused
             ? "bg-yellow-600/20 text-yellow-400"
-            : "bg-red-600/20 text-red-400"
+            : "bg-red-600/20 text-red-400",
       )}
     >
       <div
         className={clsx(
           "w-[6px] h-[6px] rounded-full mr-[6px]",
-          isActive ? "bg-text-menu" : isPaused ? "bg-yellow-400" : "bg-red-400"
+          isActive ? "bg-text-menu" : isPaused ? "bg-yellow-400" : "bg-red-400",
         )}
       />
       {isActive ? "Active" : isPaused ? "Paused" : "Inactive"}
@@ -83,7 +84,7 @@ const BotRow: FC<{
         await onDelete(bot.id);
       }
     },
-    [bot.id, bot.name, decisionModal, onDelete]
+    [bot.id, bot.name, decisionModal, onDelete],
   );
 
   const handleWorkingHours = useCallback(
@@ -91,7 +92,7 @@ const BotRow: FC<{
       e.stopPropagation();
       onWorkingHours(bot);
     },
-    [bot, onWorkingHours]
+    [bot, onWorkingHours],
   );
 
   const handleMove = useCallback(
@@ -99,7 +100,7 @@ const BotRow: FC<{
       e.stopPropagation();
       onMove(bot);
     },
-    [bot, onMove]
+    [bot, onMove],
   );
 
   const handleAssignProxy = useCallback(
@@ -107,7 +108,7 @@ const BotRow: FC<{
       e.stopPropagation();
       onAssignProxy(bot);
     },
-    [bot, onAssignProxy]
+    [bot, onAssignProxy],
   );
 
   const handleToggleStatus = useCallback(
@@ -116,7 +117,7 @@ const BotRow: FC<{
       const newStatus = bot.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
       await onToggleStatus(bot.id, newStatus);
     },
-    [bot.id, bot.status, onToggleStatus]
+    [bot.id, bot.status, onToggleStatus],
   );
 
   return (
@@ -125,14 +126,14 @@ const BotRow: FC<{
         <div className="flex items-center gap-[12px]">
           <button
             {...createToolTip(
-              bot.status === "ACTIVE" ? "Pause account" : "Activate account"
+              bot.status === "ACTIVE" ? "Pause account" : "Activate account",
             )}
             onClick={handleToggleStatus}
             className={clsx(
               "relative w-[36px] h-[36px] rounded-full border flex-shrink-0 flex items-center justify-center transition-all duration-200",
               bot.status === "ACTIVE"
                 ? "bg-red-600/20 border-red-600/30 hover:bg-red-600/30 text-red-400"
-                : "bg-green-600/20 border-green-600/30 hover:bg-green-600/30 text-green-400"
+                : "bg-green-600/20 border-green-600/30 hover:bg-green-600/30 text-green-400",
             )}
           >
             {bot.status === "ACTIVE" ? (
@@ -181,6 +182,9 @@ const BotRow: FC<{
       </td>
       <td className="px-[20px] py-[16px]">
         <StatusBadge status={bot.status} logged={bot.logged} />
+      </td>
+      <td className="px-[20px] py-[16px]">
+        <NextActionComponent id={bot.id} />
       </td>
       <td className="px-[20px] py-[16px]">
         <div className="flex items-center gap-[8px]">
@@ -257,7 +261,7 @@ export const AccountsComponent: FC = () => {
         toaster.show("Failed to delete account", "warning");
       }
     },
-    [accountsRequest, mutate, toaster]
+    [accountsRequest, mutate, toaster],
   );
 
   const openWorkingHours = useCallback(
@@ -271,7 +275,7 @@ export const AccountsComponent: FC = () => {
         ),
       });
     },
-    [group, mutate, modals]
+    [group, mutate, modals],
   );
 
   const openMoveAccount = useCallback(
@@ -285,7 +289,7 @@ export const AccountsComponent: FC = () => {
         ),
       });
     },
-    [group, mutate, modals]
+    [group, mutate, modals],
   );
 
   const openAssignProxy = useCallback(
@@ -299,7 +303,7 @@ export const AccountsComponent: FC = () => {
         ),
       });
     },
-    [group, mutate, modals]
+    [group, mutate, modals],
   );
 
   const toggleBotStatus = useCallback(
@@ -309,14 +313,14 @@ export const AccountsComponent: FC = () => {
         await mutate(); // Refresh the list
         toaster.show(
           `Account ${status === "ACTIVE" ? "activated" : "paused"} successfully`,
-          "success"
+          "success",
         );
       } catch (error) {
         console.error("Failed to update account status:", error);
         toaster.show("Failed to update account status", "warning");
       }
     },
-    [accountsRequest, mutate, toaster]
+    [accountsRequest, mutate, toaster],
   );
 
   if (isLoading) {
@@ -352,6 +356,9 @@ export const AccountsComponent: FC = () => {
               </th>
               <th className="px-[20px] py-[12px] text-left text-[12px] font-[600] text-secondary uppercase tracking-wide">
                 Status
+              </th>
+              <th className="px-[20px] py-[12px] text-left text-[12px] font-[600] text-secondary uppercase tracking-wide">
+                Next Action
               </th>
               <th className="px-[20px] py-[12px] text-left text-[12px] font-[600] text-secondary uppercase tracking-wide">
                 Actions
