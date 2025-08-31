@@ -51,6 +51,22 @@ export const GlobalSettingsComponent = () => {
             <label className="block text-sm font-medium text-primary mb-2">
               API Key
             </label>
+            <div className="text-[12px] mt-[4px] flex flex-col gap-[10px] mb-2">
+              <a
+                className="underline hover:font-bold hover:underline"
+                href="https://docs.growchief.com/public-api"
+                target="_blank"
+              >
+                Read how to use it over the documentation.
+              </a>
+              <a
+                className="underline hover:font-bold hover:underline"
+                href="https://www.npmjs.com/package/n8n-nodes-growchief"
+                target="_blank"
+              >
+                Check out our N8N custom node for GrowChief.
+              </a>
+            </div>
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <Input
