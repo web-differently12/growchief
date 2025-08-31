@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import type { FC, MouseEvent } from "react";
 import { clsx } from "clsx";
+import { timer } from "@growchief/shared-both/utils/timer.ts";
 
 interface BotLoginScreenshotProps {
   imageData: string;
@@ -31,9 +32,30 @@ const Keyboard: FC<{
   keyboardPress: (key: string) => void;
 }> = (props) => {
   useEffect(() => {
-    const func = (e: any) => {
+    const func = async (e: any) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+        e.preventDefault();
+        try {
+          // Read clipboard content
+          const clipboardText = await navigator.clipboard.readText();
+
+          // Iterate through each character and send individual keypress events
+          for (let i = 0; i < clipboardText.length; i++) {
+            const char = clipboardText[i];
+            // Simulate typing each character
+            props.keyboardPress(char);
+
+            // Add a small delay between characters to avoid overwhelming the system
+            await timer(10);
+          }
+        } catch (error) {
+          console.error("Failed to read clipboard:", error);
+        }
+        return;
+      }
+
       props.keyboardPress(
-        `${e.code}-${e.shiftKey ? "shift" : e.altKey ? "alt" : e.ctrlKey ? "ctrl" : e.metaKey ? "ctrl" : ""}`,
+        `${e.code}-${e.shiftKey ? "shift" : e.altKey ? "alt" : e.ctrlKey ? "ctrl" : e.metaKey ? "ctrl" : ""}`
       );
       e.preventDefault();
     };
@@ -55,7 +77,7 @@ const BotLoginScreenshot: FC<BotLoginScreenshotProps> = ({
 }) => {
   const sendEvent = (
     type: "click" | "move" | "scroll" | "type",
-    id: string,
+    id: string
   ) => {
     return (e: MouseEvent<HTMLImageElement> | string) => {
       if (!id) {
@@ -127,7 +149,7 @@ const BotLoginScreenshot: FC<BotLoginScreenshotProps> = ({
                 alt="Login Screenshot"
                 className={clsx(
                   "w-full select-none border-t border-background",
-                  !identifier ? 'cursor-wait': 'cursor-pointer',
+                  !identifier ? "cursor-wait" : "cursor-pointer"
                 )}
               />
             )}
