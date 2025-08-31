@@ -531,7 +531,7 @@ export class BotManager extends BotTools {
     if (lead && 'firstName' in lead && 'lastName' in lead) {
       // @ts-ignore
       cursor.setDataVariables(lead);
-    } else if (data.url) {
+    } else if (data?.url) {
       cursor.setDataVariables(data);
     }
 

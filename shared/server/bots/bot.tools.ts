@@ -202,6 +202,7 @@ export class BotTools {
         if (test) {
           return test;
         }
+        await timer(5000);
       }
     } catch (err) {
       return false;

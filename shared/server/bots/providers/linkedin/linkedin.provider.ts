@@ -194,7 +194,9 @@ export class LinkedinProvider extends BotAbstract {
           ).json();
 
           return resolve(extractMyProfile(json));
-        } catch (err) {}
+        } catch (err) {
+          console.log(err);
+        }
       }),
       new Promise(async (_) => {
         try {
@@ -210,7 +212,9 @@ export class LinkedinProvider extends BotAbstract {
           cursor.startMouse();
 
           await timer(600000);
-        } catch (err) {}
+        } catch (err) {
+          console.log(err);
+        }
       }),
     ]);
   }

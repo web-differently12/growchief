@@ -11,6 +11,11 @@ import { usePlatformsGroupsAndOptions } from "@growchief/frontend/components/wor
 import { Select } from "@growchief/frontend/components/ui/select.tsx";
 import { Button } from "@growchief/frontend/components/ui/button.tsx";
 import { useDecisionModal } from "@growchief/frontend/utils/use.decision.modal.tsx";
+import { useAccountsRequest } from "@growchief/frontend/requests/accounts.request.ts";
+import { useModals } from "@growchief/frontend/utils/store.ts";
+import { AddAccountComponent } from "@growchief/frontend/components/accounts/add.account.component.tsx";
+import { GroupContext } from "@growchief/frontend/context/group.context.tsx";
+import { PlusIcon } from "@growchief/frontend/components/icons/plus.icon.tsx";
 
 interface SideMenuProps {
   nodeId: string;
@@ -26,6 +31,9 @@ const Account: FC<SideMenuProps> = ({ nodeId }) => {
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const accounts = useGetAllAccounts();
+  const accountsRequest = useAccountsRequest();
+  const modals = useModals();
+  const { mutate } = accountsRequest.groupAndBots();
 
   // Handle both single group object and array of groups
   const availableGroups = groups!;
@@ -70,6 +78,32 @@ const Account: FC<SideMenuProps> = ({ nodeId }) => {
       }
     },
     [nodeId, updateNode, selectedGroupId, availableProfiles],
+  );
+
+  const handleAddAccount = useCallback(
+    async (group: any) => {
+      try {
+        await accountsRequest.canAddAccount();
+        modals.show({
+          label: `Add Account to group: ${group.name}`,
+          component: (close) => (
+            <GroupContext.Provider value={{ group }}>
+              <AddAccountComponent
+                close={close}
+                mutate={async () => {
+                  await mutate();
+                  // Reset selections after adding account
+                  setSelectedGroupId("");
+                }}
+              />
+            </GroupContext.Provider>
+          ),
+        });
+      } catch (error) {
+        console.error("Failed to add account:", error);
+      }
+    },
+    [],
   );
 
   if (nodes.length > 1) {
@@ -197,6 +231,25 @@ const Account: FC<SideMenuProps> = ({ nodeId }) => {
             </option>
           ))}
         </Select>
+
+        {/* Show Add Account button when no available profiles after filtering and a group is selected */}
+        {selectedGroupId && availableProfiles.length === 0 && (
+          <div className="mt-[8px]">
+            <div className="text-[12px] text-secondary mb-[8px]">
+              {selectedGroup?.bots?.length > 0
+                ? "All accounts in this group are already being used"
+                : "No accounts available in this group"}
+            </div>
+            <Button
+              onClick={() => handleAddAccount(selectedGroup)}
+              className="w-full flex items-center gap-[8px] justify-center"
+              size="sm"
+            >
+              <PlusIcon />
+              Add Account to Group
+            </Button>
+          </div>
+        )}
       </div>
 
       {selectedProfileId && (
