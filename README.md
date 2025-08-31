@@ -26,8 +26,14 @@
   <img alt="Linkedin" src="https://postiz.com/svgs/socials/Linkedin.svg" width="32">
   <img alt="X" src="https://postiz.com/svgs/socials/X.svg" width="32">
 </div>
-
 <p align="center">
+  <br />
+  <a href="https://docs.growchief.com" rel="dofollow"><strong>Explore the docs »</strong></a>
+  <br />
+</p>
+<p align="center">
+  <a href="https://www.npmjs.com/package/n8n-nodes-growchief">N8N node</a>
+  ·
   <a href="https://platform.growchief.com">Register</a>
   ·
   <a href="https://discord.growchief.com">Join Our Discord (devs only)</a>
@@ -83,7 +89,7 @@ We do not encourage spam (perfect for API/n8n automations).
 
 ## QuickStart / Installation
 
-View https://github.com/growchief/growchief/wiki/QuickStart
+View https://docs.growchief.com
 
 ## Sponsorship
 
