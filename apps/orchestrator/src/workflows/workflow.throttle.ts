@@ -27,6 +27,7 @@ import { makeId } from '@growchief/shared-both/utils/make.id';
 import { TypedSearchAttributes } from '@temporalio/common';
 import { organizationId } from '@growchief/shared-backend/temporal/temporal.search.attribute';
 import { NotificationActivity } from '@growchief/orchestrator/activities/notification.activity';
+import { botJobsQueries } from '@growchief/orchestrator/queries/bot.jobs.queries';
 
 const PROGRESS_DEADLINE = 10 * 60 * 1000;
 
@@ -87,6 +88,22 @@ export async function userWorkflowThrottler({
   let active = true;
   let logged = true;
   let workingHoursManager: WorkingHoursManager | null = null;
+
+  setHandler(botJobsQueries, () => {
+    if (!active || !logged) {
+      return false;
+    }
+
+    if (!q.length) {
+      return false;
+    }
+
+    return {
+      stepId: q[0].stepId,
+      workflowId: q[0].workflowId,
+      when: nextAllowedAt || 0,
+    };
+  });
 
   setHandler(botStatus, async (w) => {
     active = w;

@@ -188,4 +188,12 @@ export class BotsController {
       count: await this._botsService.getActiveBotsCount(organization.id),
     };
   }
+
+  @Get('/status/:id')
+  status(
+    @Param('id') id: string,
+    @GetOrganizationFromRequest() organization: Organization,
+  ) {
+    return this._botsService.getBotStatus(organization.id, id);
+  }
 }

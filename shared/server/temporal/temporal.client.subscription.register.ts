@@ -16,7 +16,8 @@ export class TemporalClientSubscriptionRegister implements OnModuleInit {
             taskQueue: 'main',
           });
       }
-
+    } catch (err) {}
+    try {
       if (!!process.env.BILLING_PROVIDER) {
         await this._temporalService
           ?.getClient()

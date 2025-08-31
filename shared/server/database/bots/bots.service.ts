@@ -7,7 +7,8 @@ import { ToolParams } from '@growchief/shared-both/utils/tool.decorator';
 import { TemporalService } from 'nestjs-temporal-core';
 import { ProxiesService } from '@growchief/shared-backend/database/proxies/proxies.service';
 import { ProxiesManager } from '@growchief/shared-backend/proxies/proxies.manager';
-
+import { organizationId as orgId } from '@growchief/shared-backend/temporal/temporal.search.attribute';
+import { botJobsQueries } from '@growchief/orchestrator/queries/bot.jobs.queries';
 @Injectable()
 export class BotsService {
   constructor(
@@ -363,5 +364,27 @@ export class BotsService {
 
   saveRestriction(botId: string, methodName: string, date: Date) {
     return this._botsRepository.saveRestriction(botId, methodName, date);
+  }
+
+  async getBotStatus(organizationId: string, botId: string): Promise<any> {
+    const handle = await this._temporal
+      .getClient()
+      .getWorkflowHandle(`user-throttler-${botId}`);
+
+    if (!handle) {
+      return { found: false };
+    }
+
+    const workflow = await handle.describe();
+    if (workflow?.typedSearchAttributes?.get(orgId) !== organizationId) {
+      return { found: false };
+    }
+
+    const query = await handle.query(botJobsQueries);
+    if (query) {
+      return query;
+    }
+
+    return { found: false };
   }
 }

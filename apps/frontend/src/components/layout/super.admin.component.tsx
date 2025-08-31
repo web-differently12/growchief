@@ -163,7 +163,7 @@ export const ViewasComponentInner: FC<{
   };
 
   return (
-    <div className="w-full bg-innerBackground mb-2 rounded-[18px] px-4 py-1 z-[500] relative">
+    <div className="w-full bg-innerBackground mb-2 rounded-[8px] px-4 py-1 z-[500] relative">
       <div className="flex items-center justify-center max-w-[100rem] gap-2 mx-auto h-8">
         <div className="flex items-center justify-center gap-4">
           <span className="text-sm font-medium text-gray-300 flex items-center">
@@ -173,7 +173,7 @@ export const ViewasComponentInner: FC<{
           <div className="flex items-center gap-2">
             <div className="relative" ref={dropdownRef}>
               <Input
-                className="w-60 h-7 pl-8 border-[#2a2a2a] bg-[#1f1f1f] text-gray-200 text-sm"
+                className="w-60 !h-[30px] pl-8 border-[#2a2a2a] bg-[#1f1f1f] text-gray-200 text-sm"
                 placeholder="Search users..."
                 {...(current ? { value: current } : {})}
                 onChange={(e) => debouncedSearch(e.target.value)}
