@@ -19,4 +19,9 @@ export class PublicApiController {
   getWorkflows(@GetOrganizationFromRequest() organization: Organization) {
     return this._workflowService.getWorkflows(organization.id);
   }
+
+  @Get('/is-connected')
+  isConnected(@GetOrganizationFromRequest() organization: Organization) {
+    return { connected: !!organization };
+  }
 }
