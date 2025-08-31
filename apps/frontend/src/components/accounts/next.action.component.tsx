@@ -86,7 +86,7 @@ export const NextActionComponent: FC<{ id: string }> = ({ id }) => {
         </div>
         {!hasActiveWorkflow && (
           <div className="text-[11px] text-secondary pl-[18px]">
-            Nothing pending
+            &nbsp;
           </div>
         )}
       </div>
