@@ -85,6 +85,7 @@ services:
 
   temporal:
     container_name: temporal
+    ports: ["7233:7233/tcp"]
     image: temporalio/auto-setup:1.28.1
     depends_on:
       - temporal-postgresql
@@ -102,16 +103,26 @@ services:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
       - TEMPORAL_NAMESPACE=default
+      - BIND_ON_IP=0.0.0.0
+      - TEMPORAL_BROADCAST_ADDRESS=127.0.0.1
     networks:
       - temporal-network
-    ports:
-      - "7233:7233"
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
     labels:
       kompose.volume.type: configMap
     healthcheck:
-      test: ["CMD","tctl", "--address", "temporal:7233", "workflow", "list", "||", "exit 1"]
+      test:
+        [
+          "CMD",
+          "tctl",
+          "--address",
+          "127.0.0.1:7233",
+          "workflow",
+          "list",
+          "||",
+          "exit 1",
+        ]
       interval: 1s
       timeout: 5s
       retries: 30
