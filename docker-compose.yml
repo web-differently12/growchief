@@ -127,29 +127,6 @@ services:
       temporal:
         condition: service_healthy
     tty: true
-    command: >
-      bash -lc '
-        echo "Waiting for gRPC health on temporal:7233...";
-        until grpcurl -plaintext -d "{\"service\":\"\"}" temporal:7233 grpc.health.v1.Health/Check >/dev/null 2>&1; do
-          sleep 1;
-        done;
-        echo "Temporal gRPC is serving; ensuring namespace...";
-        # Try with explicit address and longer RPC timeout
-        tctl --address temporal:7233 --rpc-timeout 20s --ns default namespace describe \
-          || tctl --address temporal:7233 --rpc-timeout 20s namespace create --namespace default --retention 1;
-        echo "Namespace ready.";
-        tail -f /dev/null
-      '
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "tctl --address temporal:7233 --rpc-timeout 10s --ns default namespace describe >/dev/null 2>&1",
-        ]
-      interval: 3s
-      timeout: 3s
-      retries: 20
-      start_period: 2s
 
   temporal-ui:
     container_name: temporal-ui
