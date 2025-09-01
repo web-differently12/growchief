@@ -111,15 +111,15 @@ services:
     depends_on:
       - temporal
     networks: [temporal-network]
-    volumes:
-      - ./var/docker/create-namespace-default.sh:/create-namespace.sh:ro
     entrypoint: ["/bin/sh","-ec"]
     command: |
       echo "Waiting for Temporal..."
       until tctl --address temporal:7233 cluster health >/dev/null 2>&1; do
         sleep 2
       done
-      /create-namespace.sh
+      # Idempotent create
+      tctl --address temporal:7233 namespace describe --namespace default >/dev/null 2>&1 || \
+      tctl --address temporal:7233 namespace create --namespace default --description 'Default namespace' --retention 1
     restart: "no"
 
   temporal-admin-tools:
