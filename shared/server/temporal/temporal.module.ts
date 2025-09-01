@@ -18,6 +18,9 @@ export const getTemporalModule = (
             workflowsPath: path!,
             activityClasses: activityClasses!,
             autoStart: true,
+            workerOptions: {
+              maxConcurrentActivityTaskExecutions: 24,
+            },
           },
         }
       : {}),
