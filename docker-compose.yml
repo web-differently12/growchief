@@ -28,8 +28,8 @@ services:
     depends_on:
       growchief-postgres:
         condition: service_healthy
-      temporal-namespace-init:
-        condition: service_completed_successfully
+      temporal-admin-tools:
+        condition: service_healthy
 
   growchief-postgres:
     image: postgres:16
