@@ -107,15 +107,19 @@ services:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
 
   temporal-namespace-init:
-    image: bash:5.2
+    image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
     depends_on:
-      - temporal-admin-tools
+      - temporal
+    networks: [temporal-network]
     volumes:
-      - ./var/docker/create-namespace-default.sh:/create-namespace-default.sh:ro
-    networks:
-      - temporal-network
-    entrypoint: [ "/bin/bash", "-c" ]
-    command: [ "/create-namespace-default.sh" ]
+      - ./var/docker/create-namespace-default.sh:/create-namespace.sh:ro
+    entrypoint: ["/bin/sh","-ec"]
+    command: |
+      echo "Waiting for Temporal..."
+      until tctl --address temporal:7233 cluster health >/dev/null 2>&1; do
+        sleep 2
+      done
+      /create-namespace.sh
     restart: "no"
 
   temporal-admin-tools:
