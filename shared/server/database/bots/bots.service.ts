@@ -14,6 +14,7 @@ import {
   isWithinWorkingHours,
   getTimeUntilWorkingHours,
 } from '@growchief/shared-both/utils/time.functions';
+import { NotificationManager } from '@growchief/shared-backend/notifications/notification.manager';
 @Injectable()
 export class BotsService {
   constructor(
@@ -23,6 +24,7 @@ export class BotsService {
     private _temporal: TemporalService,
     private _proxiesService: ProxiesService,
     private _proxyManager: ProxiesManager,
+    private _notificationManager: NotificationManager,
   ) {}
 
   async getProxy(orgId: string, proxyId: string) {
@@ -209,9 +211,6 @@ export class BotsService {
 
   async loggedOut(bot: string) {
     const botModel = (await this.getBot(bot))!;
-    const users = await this._organizationService.listUsersPerOrganization(
-      botModel.organization.id,
-    );
 
     try {
       // Search for all active workflows for this bot using search attributes
@@ -236,18 +235,15 @@ export class BotsService {
       }
     } catch (err) {}
 
-    for (const user of users) {
-      try {
-        await this._emailService.sendEmail(
-          user.user.email,
-          `You accounts ${botModel.name} has logged out`,
-          `
+    await this._notificationManager.sendNotification(
+      botModel.organization.id,
+      'You accounts ${botModel.name} has logged out',
+      `
         Your accounts ${botModel.name} has logged out. Please login again to continue the automation.<br />
         https://platform.postiz.com
-        `,
-        );
-      } catch (err) {}
-    }
+      `,
+      true,
+    );
 
     return true;
   }
