@@ -186,37 +186,36 @@ export class LinkedinProvider extends BotAbstract {
     cursor: SpecialEvents;
   }): Promise<{ picture: string; name: string; id: string } | false> {
     const { page, cursor } = params;
-    return Promise.race<{ picture: string; name: string; id: string } | false>([
-      new Promise(async (resolve) => {
-        try {
-          const json = await (
-            await page.waitForResponse(/34ead06db82a2cc9a778fac97f69ad6a/gm, {})
-          ).json();
+    try {
+      await page.goto('https://www.linkedin.com');
+      await page
+        .locator("//a[contains(text(), 'Sign in with email')]")
+        .waitFor();
+      await timer(5000);
+      await cursor.click("//a[contains(text(), 'Sign in with email')]");
+      await timer(5000);
 
-          return resolve(extractMyProfile(json));
-        } catch (err) {
-          console.log(err);
-        }
-      }),
-      new Promise(async (_) => {
-        try {
-          await page.goto('https://www.linkedin.com');
-          await page
-            .locator("//a[contains(text(), 'Sign in with email')]")
-            .waitFor();
-          await timer(5000);
-          await cursor.click("//a[contains(text(), 'Sign in with email')]");
-          await timer(5000);
+      await page.waitForSelector('#username');
+      cursor.startMouse();
 
-          await page.waitForSelector('#username');
-          cursor.startMouse();
-
-          await timer(600000);
-        } catch (err) {
-          console.log(err);
-        }
-      }),
-    ]);
+      return new Promise<{ picture: string; name: string; id: string } | false>(
+        async (resolve) => {
+          try {
+            page.on('response', async (response) => {
+              if (response.url().match(/34ead06db82a2cc9a778fac97f69ad6a/gm)) {
+                const json = await response.json();
+                return resolve(extractMyProfile(json));
+              }
+            });
+          } catch (err) {
+            resolve(false);
+          }
+        },
+      );
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
   }
 
   @Tool({
