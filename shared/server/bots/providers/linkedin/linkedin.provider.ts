@@ -308,22 +308,31 @@ export class LinkedinProvider extends BotAbstract {
       .locator('.artdeco-modal__actionbar button:nth-child(2)')
       .waitFor({ state: 'visible' });
 
+    await timer(5000);
+
     if (!data.message) {
       await params.cursor.click(
         '.artdeco-modal__actionbar button:nth-child(2)',
       );
+
+      await timer(5000);
     } else {
       await params.cursor.click(
         '.artdeco-modal__actionbar button:nth-child(1)',
       );
+
+      await timer(5000);
 
       const messageBox = params.page.locator(
         '.connect-button-send-invite__custom-message-box',
       );
 
       await messageBox.waitFor({ state: 'visible' });
+      await timer(5000);
 
       await params.cursor.click(messageBox);
+      await timer(5000);
+
       await params.cursor.type(data.message);
       await timer(2000);
 
@@ -331,8 +340,6 @@ export class LinkedinProvider extends BotAbstract {
         '.artdeco-modal__actionbar button:nth-last-child(1)',
       );
     }
-
-    await params.page.locator('.artdeco-modal').waitFor({ state: 'detached' });
 
     await timer(10000);
 
