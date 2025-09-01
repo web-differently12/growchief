@@ -261,22 +261,13 @@ export async function userWorkflowThrottler({
     // set the next allowed at time
     currentNextAllowedAt = Date.now() + GAP_MS;
 
-    if (patched('notifications')) {
-      if (restriction) {
-        await sendNotification({
-          orgId: job.orgId,
-          title: 'Restrictions',
-          message: restriction.message,
-          sendEmail: true,
-        });
-      } else if (delay) {
-        await sendNotification({
-          orgId: job.orgId,
-          title: 'Restrictions',
-          message: 'Your user is being delayed by ' + delay / 1000 + ' seconds',
-          sendEmail: false,
-        });
-      }
+    if (patched('notifications-01-09-2025') && restriction) {
+      await sendNotification({
+        orgId: job.orgId,
+        title: 'Restrictions',
+        message: restriction.message,
+        sendEmail: true,
+      });
     }
 
     if (leads && leads.length > 0) {
