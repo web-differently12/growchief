@@ -28,7 +28,7 @@ services:
     depends_on:
       growchief-postgres:
         condition: service_healthy
-      temporal-admin-tools:
+      temporal:
         condition: service_healthy
 
   growchief-postgres:
@@ -110,6 +110,11 @@ services:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
     labels:
       kompose.volume.type: configMap
+    healthcheck:
+      test: ["CMD", "tctl", "--address", "temporal:7233", "workflow", "list"]
+      interval: 1s
+      timeout: 5s
+      retries: 30
 
   temporal-admin-tools:
     container_name: temporal-admin-tools
@@ -123,14 +128,6 @@ services:
     depends_on:
       - temporal
     tty: true
-    entrypoint: /etc/temporal/entrypoint.sh
-    healthcheck:
-      test: ["CMD", "temporal", "workflow", "list", "--namespace", "${TEMPORAL_NAMESPACE:-default}"]
-      interval: 1s
-      timeout: 5s
-      retries: 30
-    volumes:
-      - ./var/docker/create-namespace-default.sh:/etc/temporal/entrypoint.sh
 
   temporal-ui:
     container_name: temporal-ui
