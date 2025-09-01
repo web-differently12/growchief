@@ -116,9 +116,8 @@ services:
         [
           "CMD",
           "temporal",
-          "operator",
-          "cluster",
-          "health",
+          "workflow",
+          "list",
           "--address",
           "127.0.0.1:7233",
         ]
