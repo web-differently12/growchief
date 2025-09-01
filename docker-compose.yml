@@ -83,7 +83,7 @@ services:
 
   temporal:
     container_name: temporal
-    image: temporalio/auto-setup:1.28.0
+    image: temporalio/auto-setup:1.28.1
     depends_on:
       - temporal-postgresql
       - temporal-elasticsearch
@@ -105,6 +105,18 @@ services:
       - "7233:7233"
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  temporal-namespace-init:
+    image: bash:5.2
+    depends_on:
+      - temporal-admin-tools
+    volumes:
+      - ./var/docker/create-namespace-default.sh:/create-namespace-default.sh:ro
+    networks:
+      - temporal-network
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: [ "/create-namespace-default.sh" ]
+    restart: "no"
 
   temporal-admin-tools:
     container_name: temporal-admin-tools

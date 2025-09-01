@@ -1,12 +1,11 @@
 import {
   Global,
-  Inject,
   Injectable,
   Module,
   OnModuleInit,
 } from '@nestjs/common';
-import { TEMPORAL_CLIENT, TemporalService } from 'nestjs-temporal-core';
-import { Client, Connection } from '@temporalio/client';
+import { TemporalService } from 'nestjs-temporal-core';
+import { Connection } from '@temporalio/client';
 
 @Injectable()
 export class TemporalRegister implements OnModuleInit {
