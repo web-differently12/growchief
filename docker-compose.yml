@@ -122,6 +122,10 @@ services:
       # Idempotent create
       tctl --address temporal:7233 namespace describe --namespace default >/dev/null 2>&1 || \
       tctl --address temporal:7233 namespace create --namespace default --description 'Default namespace' --retention 1
+      until tctl --address temporal:7233 namespace describe --namespace default >/dev/null 2>&1; do
+        echo "Waiting for namespace default to become visible..."
+        sleep 2
+      done
     restart: "no"
 
   temporal-admin-tools:
