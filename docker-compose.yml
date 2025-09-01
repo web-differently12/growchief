@@ -28,10 +28,6 @@ services:
     depends_on:
       growchief-postgres:
         condition: service_healthy
-      namespace-init:
-        condition: service_healthy
-      temporal:
-        condition: service_healthy
 
   growchief-postgres:
     image: postgres:16
@@ -105,22 +101,14 @@ services:
       - TEMPORAL_CLI_ADDRESS=temporal:7233
     networks:
       - temporal-network
-    expose:
-      - 7233
+    ports:
+      - "7233:7233"
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:7233"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
 
   temporal-admin-tools:
     container_name: temporal-admin-tools
     image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
-    depends_on:
-      temporal:
-        condition: service_healthy
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
@@ -129,28 +117,9 @@ services:
     stdin_open: true
     tty: true
 
-  namespace-init:
-    image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
-    depends_on:
-      - temporal-admin-tools
-    entrypoint: >
-      /bin/sh -c "
-      sleep 10;
-      tctl --address temporal:7233 namespace describe --namespace default || \
-      tctl --address temporal:7233 namespace register --namespace default --description 'Default namespace' --rd 1
-      "
-    healthcheck:
-      test: [ "CMD", "tctl", "namespace", "describe", "--namespace", "default" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   temporal-ui:
     container_name: temporal-ui
     image: temporalio/ui:2.34.0
-    depends_on:
-      temporal:
-        condition: service_healthy
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CORS_ORIGINS=http://127.0.0.1:3000
