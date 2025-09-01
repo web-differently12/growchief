@@ -115,13 +115,12 @@ services:
       test:
         [
           "CMD",
-          "tctl",
+          "temporal",
+          "operator",
+          "cluster",
+          "health",
           "--address",
           "127.0.0.1:7233",
-          "workflow",
-          "list",
-          "||",
-          "exit 1",
         ]
       interval: 1s
       timeout: 5s
