@@ -28,6 +28,8 @@ services:
     depends_on:
       growchief-postgres:
         condition: service_healthy
+      temporal-namespace-init:
+        condition: service_completed_successfully
 
   growchief-postgres:
     image: postgres:16
