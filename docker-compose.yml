@@ -83,7 +83,7 @@ services:
 
   temporal:
     container_name: temporal
-    image: temporalio/auto-setup:1.28.1
+    image: temporalio/auto-setup:1.28.0
     depends_on:
       - temporal-postgresql
       - temporal-elasticsearch
