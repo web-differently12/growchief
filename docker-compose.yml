@@ -101,12 +101,15 @@ services:
       - ES_VERSION=v7
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=default
     networks:
       - temporal-network
     ports:
       - "7233:7233"
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+    labels:
+      kompose.volume.type: configMap
 
   temporal-admin-tools:
     container_name: temporal-admin-tools
@@ -117,10 +120,12 @@ services:
     networks:
       - temporal-network
     stdin_open: true
+    depends_on:
+      - temporal
     tty: true
     entrypoint: /etc/temporal/entrypoint.sh
     healthcheck:
-      test: [ "CMD", "tctl", "workflow", "list" ]
+      test: ["CMD", "temporal", "workflow", "list", "--namespace", "${TEMPORAL_NAMESPACE:-default}"]
       interval: 1s
       timeout: 5s
       retries: 30
