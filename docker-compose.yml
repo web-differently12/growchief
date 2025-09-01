@@ -108,26 +108,6 @@ services:
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
 
-  temporal-namespace-init:
-    image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
-    depends_on:
-      - temporal
-    networks: [temporal-network]
-    entrypoint: ["/bin/sh","-ec"]
-    command: |
-      echo "Waiting for Temporal..."
-      until tctl --address temporal:7233 cluster health >/dev/null 2>&1; do
-        sleep 2
-      done
-      # Idempotent create
-      tctl --address temporal:7233 namespace describe --namespace default >/dev/null 2>&1 || \
-      tctl --address temporal:7233 namespace create --namespace default --description 'Default namespace' --retention 1
-      until tctl --address temporal:7233 namespace describe --namespace default >/dev/null 2>&1; do
-        echo "Waiting for namespace default to become visible..."
-        sleep 2
-      done
-    restart: "no"
-
   temporal-admin-tools:
     container_name: temporal-admin-tools
     image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
@@ -138,6 +118,14 @@ services:
       - temporal-network
     stdin_open: true
     tty: true
+    entrypoint: /etc/temporal/entrypoint.sh
+    healthcheck:
+      test: [ "CMD", "tctl", "workflow", "list" ]
+      interval: 1s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - ./var/docker/create-namespace-default.sh:/etc/temporal/entrypoint.sh
 
   temporal-ui:
     container_name: temporal-ui
