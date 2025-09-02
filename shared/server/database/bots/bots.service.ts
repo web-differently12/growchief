@@ -16,6 +16,7 @@ import {
 } from '@growchief/shared-both/utils/time.functions';
 import { NotificationManager } from '@growchief/shared-backend/notifications/notification.manager';
 import { PluginParams } from '@growchief/shared-backend/plugs/plug.decorator';
+import { ActionList } from '@growchief/shared-backend/bots/bots.interface';
 @Injectable()
 export class BotsService {
   constructor(
@@ -329,6 +330,30 @@ export class BotsService {
         })),
       })),
     }));
+  }
+
+  saveActions(
+    botId: string,
+    orgId: string,
+    platform: string,
+    textForComment: string,
+    value: ActionList[],
+  ) {
+    return this._botsRepository.saveActions(
+      botId,
+      orgId,
+      platform,
+      textForComment,
+      value,
+    );
+  }
+
+  checkActions(
+    botId: string,
+    platform: string,
+    check: { type: string; id: string; userUrl?: string }[],
+  ) {
+    return this._botsRepository.checkActions(botId, platform, check);
   }
 
   async saveActivity(

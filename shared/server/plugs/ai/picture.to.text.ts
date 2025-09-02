@@ -23,7 +23,7 @@ export const pictureToText = async (locator: Locator | string) => {
         'system',
         [
           {
-            type: 'input_text',
+            type: 'text',
             text: 'You are an assistant that takes a image from social media and convert it to a social post that could be describe without any attachments',
           },
         ],
@@ -32,7 +32,7 @@ export const pictureToText = async (locator: Locator | string) => {
         'user',
         [
           {
-            type: 'input_image',
+            type: 'image_url',
             image_url: {
               url: `data:image/jpeg;base64,${base64image.toString('base64')}`,
             },
@@ -51,6 +51,7 @@ export const pictureToText = async (locator: Locator | string) => {
 
     return result.post;
   } catch (err) {
+    console.log(err);
     return '';
   }
 };

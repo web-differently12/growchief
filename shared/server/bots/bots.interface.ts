@@ -17,6 +17,7 @@ export interface SpecialEvents {
     spreadOverride?: number,
     nativeClientRect?: boolean,
   ) => Promise<void>;
+  saveActions: (actions: ActionList[]) => Promise<void>;
   move: (
     event: string | Locator,
     spreadOverride?: number,
@@ -41,9 +42,13 @@ export interface SpecialEvents {
       text: string,
       sentiment?: string,
       isQuote?: boolean,
-    ) => Promise<string|undefined>;
+    ) => Promise<string | undefined>;
     extract: (text: string) => Promise<string>;
   };
+  checkUsed(
+    params: { type: string; id: string; userUrl?: string }[],
+    isQuote?: boolean,
+  ): Promise<{ found: boolean; internalId: string; type: string }[]>;
   waitForCookie(name: string, timeout?: number): Promise<string>;
   getData: () => any;
   scrollUntilElementIsVisible: (element: string) => Promise<true>;

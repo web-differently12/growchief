@@ -132,15 +132,7 @@ export const PlugModal: FC<PlugModalProps> = ({
         setLoading(false);
       }
     },
-    [
-      plug.identifier,
-      botId,
-      existingPlug,
-      plugsRequest,
-      toaster,
-      mutate,
-      close,
-    ],
+    [plug.identifier, botId, existingPlug, plugsRequest, toaster, mutate, close]
   );
 
   return (
@@ -159,7 +151,7 @@ export const PlugModal: FC<PlugModalProps> = ({
                     ? {
                         value: new RegExp(
                           variable.regex.source,
-                          variable.regex.flags,
+                          variable.regex.flags
                         ),
                         message: `Invalid format for ${variable.title}`,
                       }
@@ -178,14 +170,14 @@ export const PlugModal: FC<PlugModalProps> = ({
                     ? {
                         value: new RegExp(
                           variable.regex.source,
-                          variable.regex.flags,
+                          variable.regex.flags
                         ),
                         message: `Invalid format for ${variable.title}`,
                       }
                     : undefined,
                 })}
                 placeholder={variable.placeholder}
-                className="w-full min-h-[500px] p-[12px] rounded-[8px] border border-input-border bg-background text-primary text-[14px] resize-none focus:outline-none focus:border-btn-primary"
+                className="w-full min-h-[500px] p-[12px] rounded-[8px] border border-input-border bg-innerBackground text-primary text-[14px] resize-none focus:outline-none focus:border-btn-primary"
                 rows={3}
               />
             )}
@@ -213,6 +205,24 @@ export const PlugModal: FC<PlugModalProps> = ({
                   {variable.placeholder || "Enable"}
                 </span>
               </label>
+            )}
+
+            {variable.type === "select" && variable.options && (
+              <select
+                {...register(variable.id, {
+                  required: `${variable.title} is required`,
+                })}
+                className="w-full p-[12px] rounded-[8px] border border-input-border bg-innerBackground text-primary text-[14px] focus:outline-none focus:border-btn-primary"
+              >
+                <option value="">
+                  {variable.placeholder || `Select ${variable.title}`}
+                </option>
+                {variable.options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             )}
 
             {errors[variable.id] && (
@@ -243,7 +253,7 @@ export const PlugModal: FC<PlugModalProps> = ({
             disabled={loading}
             className={clsx(
               "flex-1",
-              loading && "opacity-50 cursor-not-allowed",
+              loading && "opacity-50 cursor-not-allowed"
             )}
           >
             {loading

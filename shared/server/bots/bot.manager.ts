@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Browser } from 'patchright';
 import { botList } from '@growchief/shared-backend/bots/bot.list';
 import {
+  ActionList,
   BotsRequestSetupDefault,
   ExactParams,
 } from '@growchief/shared-backend/bots/bots.interface';
@@ -131,6 +132,12 @@ export class BotManager extends BotTools {
         rej(new Error('aborted'));
       }
     });
+  }
+
+  private _checkAction(botId: string, platform: string) {
+    return (check: { type: string; id: string; userUrl?: string }[]) => {
+      return this._botService.checkActions(botId, platform, check);
+    };
   }
 
   run(
@@ -342,6 +349,15 @@ export class BotManager extends BotTools {
       saveLog$,
       loadPage: page as any,
       screenShare: screenClicking$,
+      check: this._checkAction(bot, botInformation.platform),
+      saveActions: (textForComment: string, actions: ActionList[]) =>
+        this._botService.saveActions(
+          bot,
+          organizationId,
+          botInformation.platform,
+          textForComment,
+          actions,
+        ),
       data,
     });
 

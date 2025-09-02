@@ -98,7 +98,7 @@ export async function workflowPlugs({
           workflowInternalId: workflowIdInternal,
           workflowId: makeId(30),
           date: Date.now(),
-          payload: JSON.parse(randomPlug.data || '{}'),
+          payload: { settings: JSON.parse(randomPlug.data || '{}') },
           functionName: tools.methodName,
           url: tools.url,
           stepId: triggerStepId,

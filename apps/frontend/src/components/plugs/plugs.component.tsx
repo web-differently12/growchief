@@ -136,13 +136,7 @@ export const RenderPlugs: FC<{ bot: Bot }> = ({ bot }) => {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-[8px] text-[11px] text-secondary">
-                  <div className="bg-background px-[8px] py-[2px] rounded-full">
-                    Priority: {plug.priority}
-                  </div>
-                  <div className="flex items-center gap-[4px]">
-                    <div className="w-[6px] h-[6px] bg-btn-primary rounded-full"></div>
-                    <span>{plug.randomSelectionChance}% chance</span>
-                  </div>
+
                 </div>
 
                 <Button

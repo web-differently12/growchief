@@ -342,7 +342,7 @@ export async function userWorkflowThrottler({
     }
 
     // Notify the campaign that this work item is complete
-    if (!repeatJob && job.leadId !== 'ignore') {
+    if (!repeatJob && job.leadId !== 'ignore' && !job.ignoreLead) {
       try {
         await saveActivity(
           job.leadId,

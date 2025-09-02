@@ -72,7 +72,13 @@ export class PlugsService {
   }
 
   async upsertPlug(botId: string, organizationId: string, data: CreatePlugDto) {
-    return this._plugsRepository.upsertPlug(botId, organizationId, data);
+    const upsert = await this._plugsRepository.upsertPlug(
+      botId,
+      organizationId,
+      data,
+    );
+    await this.startPlugs(botId, organizationId);
+    return upsert;
   }
 
   async getPlugByBotAndIdentifier(

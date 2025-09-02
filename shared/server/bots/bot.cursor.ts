@@ -1,5 +1,6 @@
 import { Page } from 'patchright';
 import {
+  ActionList,
   CheckAction,
   type RunEnrichment,
   SpecialEvents,
@@ -26,10 +27,12 @@ export const createCursor = (params: {
   saveLog$: Subject<{ message: string; type: string; args: string[] }>;
   loadPage: Page;
   screenShare: Subject<any>;
+  check: CheckAction;
+  saveActions: (textForComment: string, actions: ActionList[]) => Promise<void>;
   data: any;
 }): SpecialEvents => {
-  const { saveLog$, loadPage, screenShare, data } = params;
-
+  const { saveLog$, loadPage, screenShare, data, check, saveActions } = params;
+  let textForComment = '';
   const pauseSubject = new BehaviorSubject<boolean>(false);
   const pause$ = pauseSubject.asObservable();
 
@@ -57,6 +60,9 @@ export const createCursor = (params: {
     },
     getData: () => {
       return processedData;
+    },
+    saveActions: (actionList: ActionList[]) => {
+      return saveActions(textForComment, actionList);
     },
     async waitForCookie(name: string, timeout = 360000) {
       const start = Date.now();
@@ -266,11 +272,17 @@ export const createCursor = (params: {
         sentiment?: string,
         isQuote?: boolean,
       ) => {
+        textForComment = text;
         return commentAI(prompt, text, sentiment, isQuote);
       },
       extract: (text: string) => {
         return extractTextAi(text);
       },
+    },
+    checkUsed(
+      params: { type: string; id: string }[],
+    ): Promise<{ found: boolean; internalId: string; type: string }[]> {
+      return check(params);
     },
     pause: () => {
       pauseSubject.next(true);

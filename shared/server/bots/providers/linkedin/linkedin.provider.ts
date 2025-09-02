@@ -1,4 +1,5 @@
 import {
+  ActionList,
   BotAbstract,
   type ParamsValue,
   RequireField,
@@ -12,9 +13,10 @@ import { extractMyProfile } from '@growchief/shared-backend/bots/providers/linke
 import { extractConnectionTarget } from '@growchief/shared-backend/bots/providers/linkedin/extra.person.profile';
 import { compareTwoStrings } from 'string-similarity';
 import { ProgressResponse } from '@growchief/shared-backend/temporal/progress.response';
-import { uniqBy } from 'lodash';
+import { shuffle, uniqBy } from 'lodash';
 import { Plug } from '@growchief/shared-backend/plugs/plug.decorator';
 import { generateComment } from '@growchief/shared-backend/plugs/ai/comment.ai';
+import { expect } from 'patchright/test';
 
 const list = [
   {
@@ -530,8 +532,9 @@ export class LinkedinProvider extends BotAbstract {
   @Plug({
     priority: 1,
     identifier: 'like-and-comment-on-main-feed',
-    description: 'Like and comment on main feed',
-    title: 'Like and comment on main feed',
+    description:
+      "Using a smart AI approach, we will give likes a craft great messages that don't look like AI",
+    title: 'Random likes and comments with AI',
     randomSelectionChance: 1,
     variables: [
       {
@@ -559,24 +562,24 @@ export class LinkedinProvider extends BotAbstract {
         placeholder: 'Connection type',
         options: [
           {
-            label: 'all',
-            value: 'All',
+            value: 'all',
+            label: 'All',
           },
           {
-            label: 'my-connections',
-            value: 'My Connections',
+            value: 'my-connections',
+            label: 'My Connections',
           },
           {
-            label: 'my-friends-connections',
-            value: 'My Friends Connections',
+            value: 'my-friends-connections',
+            label: 'My Friends Connections',
           },
           {
-            label: 'non-friends-connections',
-            value: 'Non Friends Connections',
+            value: 'non-friends-connections',
+            label: 'Non Friends Connections',
           },
           {
-            label: 'people-i-follow',
-            value: 'People I follow',
+            value: 'people-i-follow',
+            label: 'People I follow',
           },
         ],
       },
@@ -590,12 +593,258 @@ export class LinkedinProvider extends BotAbstract {
       },
     ],
   })
-  async likeAndComment() {
-    console.log('plug');
+  async likeAndComment(params: ParamsValue) {
+    const { page, cursor } = params;
+    const list = await page.waitForResponse(/voyagerFeedDashMainFeed/);
+    const included = (await list.json()).included;
+    const connectionType = params.cursor.getData()['connection-type'];
+    const content: { id: string; text: string; profile: string }[] = included
+      .filter(
+        (f: any) =>
+          f.commentary && f.entityUrn.indexOf('(urn:li:activity:') > -1,
+      )
+      .map((p: any) => {
+        const txt = p?.actor?.supplementaryActorInfo?.text || '';
+        return {
+          distance:
+            txt.indexOf('Following') > -1
+              ? 4
+              : txt.indexOf('3') > -1
+                ? 3
+                : txt.indexOf('2') > -1
+                  ? 2
+                  : txt.indexOf('1') > -1
+                    ? 1
+                    : undefined,
+          profile:
+            p?.actor?.name?.attributesV2?.[0]?.detailData?.['*profileFullName'],
+          id: p.entityUrn.split('(')[1].split(',')[0],
+          text: p.commentary.text?.text || p.commentary.text,
+        };
+      })
+      .filter((f: any) => {
+        return f.id.indexOf('activity') > -1 && f.profile;
+      })
+      .filter((f: any) => {
+        if (connectionType === 'all') {
+          return true;
+        }
+        if (connectionType === 'my-connections') {
+          return f.distance === 1;
+        }
+        if (connectionType === 'my-friends-connections') {
+          return f.distance === 2;
+        }
+        if (connectionType === 'non-friends-connections') {
+          return f.distance === 3;
+        }
+        if (connectionType === 'people-i-follow') {
+          return f.distance === 4;
+        }
+        return false;
+      })
+      .map((p: any) => ({
+        ...p,
+        profile: `https://www.linkedin.com/in/${included.find((a: any) => a?.entityUrn === p.profile)?.publicIdentifier}`,
+      }));
+
+    const used = await cursor.checkUsed(
+      content.reduce(
+        (all, p) => [
+          ...all,
+          ...[
+            {
+              userUrl: p.profile,
+              type: 'upvote',
+              id: p.id,
+            },
+            {
+              userUrl: p.profile,
+              type: 'comment',
+              id: p.id,
+            },
+          ],
+        ],
+        [] as { id: string; type: string }[],
+      ),
+    );
+
+    const notFound = used.filter((f) => !f.found);
+    if (!notFound.length) {
+      return {
+        delay: 0,
+        repeatJob: false,
+        endWorkflow: false,
+      };
+    }
+
+    const notUsedAndUnique = uniqBy(notFound, (p) => p.internalId);
+
+    const checkForValidOnce = (
+      await cursor.ai.getAllowedSubjects(
+        notUsedAndUnique.map((p) => ({
+          id: p.internalId,
+          title: content?.find?.((a) => a?.id === p?.internalId)!.text,
+        })),
+        params.cursor.getData().positive,
+        params.cursor.getData().negative,
+      )
+    ).filter((f) => f.allowed);
+
+    const selected = shuffle(checkForValidOnce)[0];
+
+    const getAllVisibleSelectors = await Promise.all(
+      (
+        await page
+          .locator(`//div[contains(@data-id, "urn:li:activity:")]`)
+          .all()
+      ).map((p) => p.getAttribute('data-id')),
+    );
+
+    const mapUntilSelected = getAllVisibleSelectors.map((p) => {
+      return {
+        id: p,
+        selected: p === selected.id,
+        text: content.find((c) => c.id === p)?.text,
+      };
+    });
+
+    if (mapUntilSelected.filter((f) => f.selected).length === 0) {
+      return {
+        delay: 0,
+        repeatJob: false,
+        endWorkflow: false,
+      };
+    }
+
+    while (!mapUntilSelected[0].selected) {
+      const elm = mapUntilSelected.shift();
+      await cursor.scrollToElement(`div[data-id="${elm?.id!}"]`);
+    }
+
+    const current = mapUntilSelected[0];
+    await cursor.scrollToElement(`div[data-id="${current.id}"]`);
+
+    await cursor.scrollUntilElementIsVisible(
+      `div[data-id="${current.id}"] [href="#thumbs-up-outline-small"]`,
+    );
+
+    const options = used.filter((f) => !f.found && f.internalId === current.id);
+    const actions = [] as ActionList[];
+    for (const option of options) {
+      if (option.type === 'upvote') {
+        await giveLike({ ...params, data: { id: current.id! } });
+        actions.push({
+          type: 'upvote',
+          id: current.id!,
+          comment: '',
+        });
+      }
+
+      if (option.type === 'comment') {
+        const [output] =
+          (await giveComment({
+            ...params,
+            data: { id: current.id!, text: current.text! },
+          })) || [];
+
+        actions.push({
+          type: 'comment',
+          id: current.id!,
+          comment: output.comment,
+        });
+      }
+
+      await timer(2000);
+    }
+
+    await timer(2000);
+
+    await cursor.saveActions(actions);
+
     return {
-      endWorkflow: false,
       delay: 0,
       repeatJob: false,
+      endWorkflow: false,
     };
   }
 }
+
+const giveLike = async (params: {
+  page: Page;
+  cursor: SpecialEvents;
+  data: {
+    id: string;
+  };
+}): Promise<false | ActionList[]> => {
+  const { page, data, cursor } = params;
+
+  await cursor.move(
+    `div[data-id="${data.id}"] [href="#thumbs-up-outline-small"]`,
+  );
+
+  await expect(
+    page
+      .locator(
+        `div[data-id="${data.id}"] img[alt="support"]:not(.social-detail-social-counts__count-icon)`,
+      )
+      .first(),
+  ).toBeVisible();
+
+  const option = shuffle([
+    'like',
+    'celebrate',
+    'support',
+    'love',
+    'insightful',
+  ])[0];
+
+  await cursor.simpleMoveAndClick(
+    `div[data-id="${data.id}"] img[alt="${option}"]:not(.social-detail-social-counts__count-icon)`,
+  );
+
+  return [];
+};
+
+const giveComment = async (params: {
+  page: Page;
+  cursor: SpecialEvents;
+  data: {
+    id: string;
+    text: string;
+  };
+}): Promise<false | ActionList[]> => {
+  const { data, cursor, page } = params;
+  const systemPrompt = cursor.getData()['system-prompt'];
+
+  await cursor.simpleMoveAndClick(
+    `div[data-id="${data.id}"] [href="#comment-small"]`,
+  );
+
+  await page.locator('[data-artdeco-is-focused="true"]').waitFor();
+  await timer(1000);
+
+  const comment = (await cursor.ai.comment(systemPrompt, data.text))!;
+
+  await cursor.type(comment);
+
+  await page
+    .locator(
+      "//div[contains(@class, 'comments-comment-texteditor')]//button[contains(., 'Comment')]",
+    )
+    .waitFor();
+  await timer(1000);
+  await cursor.click(
+    "//div[contains(@class, 'comments-comment-texteditor')]//button[contains(., 'Comment')]",
+  );
+
+  await timer(3000);
+
+  return [
+    {
+      comment,
+      type: '',
+      id: '',
+    },
+  ];
+};
