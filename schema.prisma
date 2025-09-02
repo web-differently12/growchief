@@ -44,6 +44,8 @@ model Organization {
   leadOrganizations LeadsOrganization[]
   activities        Activity[]
   proxies           Proxy[]
+  plugs             Plugs[]
+  actions           SavedActions[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -152,6 +154,8 @@ model Bot {
   proxyId        String?
   proxy          Proxy?         @relation(fields: [proxyId], references: [id])
   restrictions   Restrictions[]
+  plugs          Plugs[]
+  actions        SavedActions[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -245,13 +249,13 @@ model Activity {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   type           String
-  createdAt      DateTime     @db.Date @default(now())
+  createdAt      DateTime     @default(now()) @db.Date
   botId          String
   stepId         String
   workflowId     String
 
-  @@index([leadId, organizationId, type])
   @@unique([leadId, organizationId, type, botId, stepId, workflowId])
+  @@index([leadId, organizationId, type])
 }
 
 model Proxy {
@@ -285,6 +289,51 @@ model Restrictions {
   bot        Bot      @relation(fields: [botId], references: [id])
 
   @@index([botId, until])
+}
+
+model Plugs {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  data           String       @default("{}")
+  botId          String
+  bot            Bot          @relation(fields: [botId], references: [id])
+  identifier     String
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  @@unique([botId, identifier])
+  @@index([active])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model SavedActions {
+  id             String       @id @default(uuid())
+  platform       String
+  internalId     String
+  type           String
+  botId          String
+  bot            Bot          @relation(fields: [botId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  content        String?
+  comment        String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([internalId, type, botId])
+  @@index([platform])
+  @@index([type])
+  @@index([internalId])
+  @@index([botId])
+  @@index([organizationId])
+  @@index([createdAt])
+  @@index([deletedAt])
 }
 
 enum InviteStatus {

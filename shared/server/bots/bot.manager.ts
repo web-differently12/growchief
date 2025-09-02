@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Browser } from 'patchright';
 import { botList } from '@growchief/shared-backend/bots/bot.list';
 import {
+  ActionList,
   BotsRequestSetupDefault,
   ExactParams,
 } from '@growchief/shared-backend/bots/bots.interface';
@@ -133,6 +134,12 @@ export class BotManager extends BotTools {
     });
   }
 
+  private _checkAction(botId: string, platform: string) {
+    return (check: { type: string; id: string; userUrl?: string }[]) => {
+      return this._botService.checkActions(botId, platform, check);
+    };
+  }
+
   run(
     isActivity = false,
     params: {
@@ -238,6 +245,7 @@ export class BotManager extends BotTools {
       leadId,
       proxyId,
       appendUrl,
+      ignoreLead,
     } = params;
 
     const botInformation = (await this._botService.getBot(bot)) || {
@@ -341,6 +349,15 @@ export class BotManager extends BotTools {
       saveLog$,
       loadPage: page as any,
       screenShare: screenClicking$,
+      check: this._checkAction(bot, botInformation.platform),
+      saveActions: (textForComment: string, actions: ActionList[]) =>
+        this._botService.saveActions(
+          bot,
+          organizationId,
+          botInformation.platform,
+          textForComment,
+          actions,
+        ),
       data,
     });
 
@@ -510,7 +527,7 @@ export class BotManager extends BotTools {
     }
 
     const lead =
-      functionName === 'login' || functionName === 'leadList' || appendUrl
+      functionName === 'login' || appendUrl || ignoreLead
         ? {}
         : await this.processLead(leadId, () => {
             return findProvider.processLead({

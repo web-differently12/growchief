@@ -15,6 +15,8 @@ import {
   getTimeUntilWorkingHours,
 } from '@growchief/shared-both/utils/time.functions';
 import { NotificationManager } from '@growchief/shared-backend/notifications/notification.manager';
+import { PluginParams } from '@growchief/shared-backend/plugs/plug.decorator';
+import { ActionList } from '@growchief/shared-backend/bots/bots.interface';
 @Injectable()
 export class BotsService {
   constructor(
@@ -309,6 +311,51 @@ export class BotsService {
     }));
   }
 
+  public getPlugins() {
+    return botList.map((b) => ({
+      identifier: b.identifier,
+      label: b.label,
+      plugins: (
+        (Reflect.getMetadata('custom:plugin', b.constructor.prototype) ||
+          []) as Array<{ methodName: string; url: string } & PluginParams>
+      ).map((p) => ({
+        ...p,
+        url: b.initialPage,
+        variables: p.variables.map((v) => ({
+          ...v,
+          regex: {
+            source: v.regex.source,
+            flags: v.regex.flags,
+          },
+        })),
+      })),
+    }));
+  }
+
+  saveActions(
+    botId: string,
+    orgId: string,
+    platform: string,
+    textForComment: string,
+    value: ActionList[],
+  ) {
+    return this._botsRepository.saveActions(
+      botId,
+      orgId,
+      platform,
+      textForComment,
+      value,
+    );
+  }
+
+  checkActions(
+    botId: string,
+    platform: string,
+    check: { type: string; id: string; userUrl?: string }[],
+  ) {
+    return this._botsRepository.checkActions(botId, platform, check);
+  }
+
   async saveActivity(
     leadId: string,
     organizationId: string,
@@ -329,6 +376,10 @@ export class BotsService {
 
   public getToolsByIdentifier(identifier: string) {
     return this.getTools().find((p) => p.identifier === identifier);
+  }
+
+  public getToolsPluginsByIdentifier(identifier: string) {
+    return this.getPlugins().find((p) => p.identifier === identifier)?.plugins!;
   }
 
   public async disableAll(organizationId: string) {

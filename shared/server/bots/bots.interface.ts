@@ -4,6 +4,10 @@ import { timer } from '@growchief/shared-both/utils/timer';
 import { Tool } from '@growchief/shared-both/utils/tool.decorator';
 import { ProgressResponse } from '@growchief/shared-backend/temporal/progress.response';
 import { EnrichmentReturn } from '@growchief/shared-backend/enrichment/enrichment.interface';
+import {
+  SubjectsAllowed,
+  SubjectsInterface,
+} from '@growchief/shared-backend/plugs/ai/subjects.ai';
 type Exact<T, U extends T> = U;
 
 export interface SpecialEvents {
@@ -13,6 +17,7 @@ export interface SpecialEvents {
     spreadOverride?: number,
     nativeClientRect?: boolean,
   ) => Promise<void>;
+  saveActions: (actions: ActionList[]) => Promise<void>;
   move: (
     event: string | Locator,
     spreadOverride?: number,
@@ -25,6 +30,25 @@ export interface SpecialEvents {
   type(text: string, options?: HumanTypingOptions): Promise<void>;
   startMouse(): void;
   endMouse(): void;
+  ai: {
+    getAllowedSubjects: (
+      subjects: SubjectsInterface[],
+      positive: string,
+      negative: string,
+      isQuote?: boolean,
+    ) => Promise<SubjectsAllowed[]>;
+    comment: (
+      prompt: string,
+      text: string,
+      sentiment?: string,
+      isQuote?: boolean,
+    ) => Promise<string | undefined>;
+    extract: (text: string) => Promise<string>;
+  };
+  checkUsed(
+    params: { type: string; id: string; userUrl?: string }[],
+    isQuote?: boolean,
+  ): Promise<{ found: boolean; internalId: string; type: string }[]>;
   waitForCookie(name: string, timeout?: number): Promise<string>;
   getData: () => any;
   scrollUntilElementIsVisible: (element: string) => Promise<true>;
@@ -137,4 +161,5 @@ export interface BotsRequestSetupDefault {
   leadId: string;
   proxyId?: string;
   appendUrl?: string;
+  ignoreLead?: boolean;
 }

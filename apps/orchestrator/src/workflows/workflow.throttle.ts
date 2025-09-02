@@ -46,6 +46,7 @@ export type Work = {
   botId: string;
   totalRepeat: number;
   appendUrl?: string;
+  ignoreLead?: boolean;
 };
 
 const { saveActivity, saveRestriction, getStepRestrictions } =
@@ -246,6 +247,7 @@ export async function userWorkflowThrottler({
         leadId: job.leadId,
         proxyId: botModel?.proxyId || '',
         appendUrl: job.appendUrl,
+        ignoreLead: !!job.ignoreLead,
       }),
     );
 
@@ -340,7 +342,7 @@ export async function userWorkflowThrottler({
     }
 
     // Notify the campaign that this work item is complete
-    if (!repeatJob && job.leadId !== 'ignore') {
+    if (!repeatJob && job.leadId !== 'ignore' && !job.ignoreLead) {
       try {
         await saveActivity(
           job.leadId,

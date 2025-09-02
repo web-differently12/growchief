@@ -18,6 +18,8 @@ import type { User } from "@growchief/frontend/utils/store.ts";
 import { ProxyIcon } from "@growchief/frontend/components/icons/proxy.icon.tsx";
 import { AnalyticsIcon } from "@growchief/frontend/components/icons/analytics.icon.tsx";
 import { AnalyticsPage } from "@growchief/frontend/pages/analytics.page.tsx";
+import { PlugsPage } from "@growchief/frontend/pages/plugs.page.tsx";
+import { PlugsIcon } from "@growchief/frontend/components/icons/plugs.icon.tsx";
 
 export type OneRoute = RouteProps & {
   label: string;
@@ -60,6 +62,13 @@ export const topRoutes: (user: User) => RoutesType = (_: User) => [
     icon: <ProxyIcon />,
   },
   {
+    label: "Plugs",
+    path: "/plugs/*",
+    menu: true,
+    element: <PlugsPage />,
+    icon: <PlugsIcon />,
+  },
+  {
     label: "Leads",
     path: "/leads",
     menu: true,
@@ -69,7 +78,8 @@ export const topRoutes: (user: User) => RoutesType = (_: User) => [
 ];
 
 export const bottomRoutes: (user: User) => RoutesType = (user: User) => [
-  ...(["ADMIN", "SUPERADMIN"].indexOf(user?.org?.users?.[0]?.role) > -1 && !user.selfhosted
+  ...(["ADMIN", "SUPERADMIN"].indexOf(user?.org?.users?.[0]?.role) > -1 &&
+  !user.selfhosted
     ? [
         {
           label: "Billing",

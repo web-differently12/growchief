@@ -6,6 +6,8 @@ import {
 import { Status } from '@prisma/client';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { intersection } from 'lodash';
+import { ActionList } from '@growchief/shared-backend/bots/bots.interface';
 dayjs.extend(utc);
 
 @Injectable()
@@ -17,6 +19,7 @@ export class BotsRepository {
     private _workflows: PrismaRepository<'workflows'>,
     private _workflowNodes: PrismaRepository<'workflowNodes'>,
     private _restrictions: PrismaRepository<'restrictions'>,
+    private _savedActions: PrismaRepository<'savedActions'>,
     private _prisma: PrismaService,
   ) {}
 
@@ -48,6 +51,74 @@ export class BotsRepository {
         createdAt: 'desc',
       },
     });
+  }
+
+  async saveActions(
+    botId: string,
+    orgId: string,
+    platform: string,
+    textForComment: string,
+    value: ActionList[],
+  ) {
+    await this._savedActions.model.savedActions.createMany({
+      data: value.map((p) => ({
+        platform,
+        internalId: p.id,
+        type: p.type,
+        botId: botId,
+        organizationId: orgId,
+        content: p.comment,
+        comment: textForComment,
+      })),
+    });
+  }
+
+  async checkActions(
+    botId: string,
+    platform: string,
+    check: { type: string; id: string; userUrl?: string }[],
+  ) {
+    // const { settings } = await this._bot.model.bot.findFirst({
+    //   where: { id: botId },
+    // });
+
+    const usersToIgnore = check
+      .filter((p) => p.userUrl)
+      .map((p) => p?.userUrl?.split('?')[0]);
+
+    const ignoreUsers = [];
+    // const ignoreUsers =
+    //   JSON.parse(settings || '{}')?.ignoreUsers ||
+    //   ([] as string[]).map((p) => p.split('?')[0]);
+
+    const usersToRemove = intersection(usersToIgnore, ignoreUsers);
+
+    const load = await this._savedActions.model.savedActions.findMany({
+      where: {
+        botId,
+        OR: check.map((p) => ({
+          platform,
+          type: p.type,
+          internalId: p.id,
+        })),
+      },
+    });
+
+    return check.reduce((all, current) => {
+      return [
+        ...all,
+        ...(usersToRemove.indexOf(current.userUrl) > -1 ||
+        load.some((p) => {
+          return (
+            p.type === current.type &&
+            p.internalId === current.id &&
+            p.platform === platform
+          );
+        })
+          ? [{ type: current.type, internalId: current.id, found: true }]
+          : [{ type: current.type, internalId: current.id, found: false }]),
+      ];
+    }, []);
   }
 
   // BotGroup operations
@@ -518,7 +589,11 @@ export class BotsRepository {
     });
   }
 
-  async getWorkflowStepDetails(workflowId: string, stepId: string, organizationId: string) {
+  async getWorkflowStepDetails(
+    workflowId: string,
+    stepId: string,
+    organizationId: string,
+  ) {
     const step = await this._workflowNodes.model.workflowNodes.findFirst({
       where: {
         id: stepId,
@@ -540,7 +615,7 @@ export class BotsRepository {
     }
 
     const data = JSON.parse(step.data || '{}');
-    
+
     return {
       stepName: this._getStepDisplayName(step.type, data),
       workflowName: step.workflow.name,
@@ -560,9 +635,10 @@ export class BotsRepository {
       case 'delay':
         return `Delay (${data.delay || 0}s)`;
       default:
-        return type.split('-').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
+        return type
+          .split('-')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
     }
   }
 }

@@ -25,6 +25,7 @@ export class AccountsStepActivity {
     leadId: string;
     appendUrl?: string;
     proxyId?: string;
+    ignoreLead: boolean;
   }): Promise<ProgressResponse> {
     return (await this._botManager.run(true, {
       bot: params.botId,
@@ -38,6 +39,7 @@ export class AccountsStepActivity {
       leadId: params.leadId,
       proxyId: params.proxyId,
       appendUrl: params.appendUrl,
+      ignoreLead: params.ignoreLead,
     })) as ProgressResponse;
   }
 }

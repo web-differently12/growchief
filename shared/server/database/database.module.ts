@@ -21,6 +21,8 @@ import { AnalyticsRepository } from '@growchief/shared-backend/database/analytic
 import { AnalyticsService } from '@growchief/shared-backend/database/analytics/analytics.service';
 import { ProxiesService } from '@growchief/shared-backend/database/proxies/proxies.service';
 import { ProxiesRepository } from '@growchief/shared-backend/database/proxies/proxies.repository';
+import { PlugsRepository } from '@growchief/shared-backend/database/plugs/plugs.repository';
+import { PlugsService } from '@growchief/shared-backend/database/plugs/plugs.service';
 
 @Global()
 @Module({
@@ -47,6 +49,8 @@ import { ProxiesRepository } from '@growchief/shared-backend/database/proxies/pr
     AnalyticsService,
     ProxiesService,
     ProxiesRepository,
+    PlugsRepository,
+    PlugsService,
   ],
   get exports() {
     return [...this.providers];
