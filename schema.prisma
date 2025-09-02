@@ -44,6 +44,7 @@ model Organization {
   leadOrganizations LeadsOrganization[]
   activities        Activity[]
   proxies           Proxy[]
+  plugs             Plugs[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -152,6 +153,7 @@ model Bot {
   proxyId        String?
   proxy          Proxy?         @relation(fields: [proxyId], references: [id])
   restrictions   Restrictions[]
+  plugs          Plugs[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -245,13 +247,13 @@ model Activity {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   type           String
-  createdAt      DateTime     @db.Date @default(now())
+  createdAt      DateTime     @default(now()) @db.Date
   botId          String
   stepId         String
   workflowId     String
 
-  @@index([leadId, organizationId, type])
   @@unique([leadId, organizationId, type, botId, stepId, workflowId])
+  @@index([leadId, organizationId, type])
 }
 
 model Proxy {
@@ -285,6 +287,26 @@ model Restrictions {
   bot        Bot      @relation(fields: [botId], references: [id])
 
   @@index([botId, until])
+}
+
+model Plugs {
+  id              String       @id @default(uuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  botId           String
+  bot             Bot          @relation(fields: [botId], references: [id])
+  identifier      String
+  minutesInterval Int
+  active          Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  @@unique([botId, identifier])
+  @@index([active])
+  @@index([minutesInterval])
+  @@index([createdAt])
+  @@index([deletedAt])
 }
 
 enum InviteStatus {

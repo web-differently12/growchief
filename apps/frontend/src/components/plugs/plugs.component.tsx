@@ -19,19 +19,57 @@ interface Plug {
 
 export const RenderPlugs: FC<{ bot: Bot }> = ({ bot }) => {
   const fetch = useFetch();
-  const { data: plugsData } = useSWR<Plug[]>(
+  const { data: plugsData, isLoading } = useSWR<Plug[]>(
     "/plugs/" + bot.platform,
     async () => {
       return (await fetch("/plugs/" + bot.platform)).json();
-    },
+    }
   );
-  return (
-    <div>
-      {plugsData?.map((p) => (
-        <div>
-          // render
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-secondary">Loading plugs...</div>
+      </div>
+    );
+  }
+
+  if (!plugsData || plugsData.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-[16px] font-[600] text-primary mb-[8px]">
+            No plugs available
+          </div>
+          <div className="text-[14px] text-secondary">
+            No plugs found for {bot.platform} platform
+          </div>
         </div>
-      ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-[16px]">
+        {plugsData.map((plug) => (
+          <div
+            key={plug.identifier}
+            className="shadow-menu bg-innerBackground border border-background rounded-[8px] p-[16px] hover:bg-boxHover transition-all duration-200 cursor-pointer group"
+          >
+            <div className="flex items-start justify-between mb-[12px]">
+              <div className="flex-1">
+                <h3 className="text-[14px] font-[600] text-primary mb-[4px] transition-colors">
+                  {plug.title}
+                </h3>
+                <div className="text-[12px] text-secondary mb-[8px]">
+                  {plug.description}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -60,16 +98,17 @@ export const PlugsInner: FC<{ id: string }> = ({ id }) => {
       <div className="bg-innerBackground p-[20px] flex flex-col w-[260px] gap-[8px]">
         {bots.map((bot) => (
           <div
+            key={bot.id}
             onClick={() => setCurrent(bot)}
             className={clsx(
               "cursor-pointer relative flex items-center gap-[12px] group/profile hover:bg-boxHover rounded-e-[8px]",
-              current?.id === bot.id && "bg-boxHover",
+              current?.id === bot.id && "bg-boxHover"
             )}
           >
             <div
               className={clsx(
                 "h-full w-[4px] rounded-s-[3px] opacity-0 group-hover/profile:opacity-100 transition-opacity",
-                current?.id === bot.id && "opacity-100",
+                current?.id === bot.id && "opacity-100"
               )}
             >
               <LineIcon />
