@@ -532,6 +532,16 @@ export class LinkedinProvider extends BotAbstract {
     description: 'Like and comment on main feed',
     title: 'Like and comment on main feed',
     randomSelectionChance: 1,
+    variables: [
+      {
+        type: 'textarea',
+        title: 'System Prompt',
+        defaultValue: 'Example value',
+        regex: /.*/gm,
+        id: 'system-prompt',
+        placeholder: 'Enter the system prompt',
+      },
+    ],
   })
   async plug() {
     return {

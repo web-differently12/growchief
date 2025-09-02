@@ -290,21 +290,19 @@ model Restrictions {
 }
 
 model Plugs {
-  id              String       @id @default(uuid())
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  botId           String
-  bot             Bot          @relation(fields: [botId], references: [id])
-  identifier      String
-  minutesInterval Int
-  active          Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  deletedAt       DateTime?
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  botId          String
+  bot            Bot          @relation(fields: [botId], references: [id])
+  identifier     String
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
 
   @@unique([botId, identifier])
   @@index([active])
-  @@index([minutesInterval])
   @@index([createdAt])
   @@index([deletedAt])
 }

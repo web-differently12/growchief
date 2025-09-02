@@ -6,6 +6,14 @@ export interface PluginParams {
   description: string;
   priority: number;
   randomSelectionChance: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+  variables: {
+    type: 'input' | 'textarea' | 'number' | 'boolean' | 'select';
+    title: string;
+    defaultValue: string;
+    id: string;
+    placeholder: string;
+    regex: RegExp;
+  }[];
 }
 
 export function Plug(params: PluginParams) {

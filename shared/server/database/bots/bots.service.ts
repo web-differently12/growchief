@@ -15,6 +15,7 @@ import {
   getTimeUntilWorkingHours,
 } from '@growchief/shared-both/utils/time.functions';
 import { NotificationManager } from '@growchief/shared-backend/notifications/notification.manager';
+import { PluginParams } from '@growchief/shared-backend/plugs/plug.decorator';
 @Injectable()
 export class BotsService {
   constructor(
@@ -313,8 +314,19 @@ export class BotsService {
     return botList.map((b) => ({
       identifier: b.identifier,
       label: b.label,
-      plugins: (Reflect.getMetadata('custom:plugin', b.constructor.prototype) ||
-        []) as Array<{ methodName: string } & ToolParams>,
+      plugins: (
+        (Reflect.getMetadata('custom:plugin', b.constructor.prototype) ||
+          []) as Array<{ methodName: string } & PluginParams>
+      ).map((p) => ({
+        ...p,
+        variables: p.variables.map((v) => ({
+          ...v,
+          regex: {
+            source: v.regex.source,
+            flags: v.regex.flags,
+          },
+        })),
+      })),
     }));
   }
 
