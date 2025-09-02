@@ -63,5 +63,6 @@ export async function workflowUploadLeads({
     priority: 0,
     leadId: 'ignore',
     totalRepeat: 0,
+    ignoreLead: true,
   });
 }

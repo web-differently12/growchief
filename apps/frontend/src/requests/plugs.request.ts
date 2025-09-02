@@ -4,16 +4,19 @@ import useSWR from "swr";
 export interface CreatePlugData {
   identifier: string;
   active: boolean;
+  data?: string;
 }
 
 export interface UpdatePlugData {
   active?: boolean;
+  data?: string;
 }
 
 export interface UserPlug {
   id: string;
   identifier: string;
   active: boolean;
+  data: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +27,7 @@ export const usePlugsRequest = () => {
   return {
     // Get plugs for a specific bot
     getBotPlugs: (botId: string) => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       return useSWR<UserPlug[]>(
         botId ? `/plugs/bot/${botId}` : null,
         async () => {

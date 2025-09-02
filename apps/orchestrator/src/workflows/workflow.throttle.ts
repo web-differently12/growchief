@@ -46,6 +46,7 @@ export type Work = {
   botId: string;
   totalRepeat: number;
   appendUrl?: string;
+  ignoreLead?: boolean;
 };
 
 const { saveActivity, saveRestriction, getStepRestrictions } =
@@ -246,6 +247,7 @@ export async function userWorkflowThrottler({
         leadId: job.leadId,
         proxyId: botModel?.proxyId || '',
         appendUrl: job.appendUrl,
+        ignoreLead: !!job.ignoreLead,
       }),
     );
 

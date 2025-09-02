@@ -23,6 +23,12 @@ export class PlugsRepository {
         active: true,
         createdAt: true,
         updatedAt: true,
+        data: true,
+        bot: {
+          select: {
+            platform: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -47,11 +53,13 @@ export class PlugsRepository {
         organizationId,
         identifier: data.identifier,
         active: data.active,
+        data: data.data || '[]',
       },
       select: {
         id: true,
         identifier: true,
         active: true,
+        data: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -59,7 +67,7 @@ export class PlugsRepository {
   }
 
   async updatePlug(id: string, organizationId: string, data: UpdatePlugDto) {
-    return this._plugs.model.plugs.updateMany({
+    return this._plugs.model.plugs.update({
       where: {
         id,
         organizationId,
@@ -69,18 +77,8 @@ export class PlugsRepository {
         ...data,
         updatedAt: new Date(),
       },
-    });
-  }
-
-  async deletePlug(id: string, organizationId: string) {
-    return this._plugs.model.plugs.updateMany({
-      where: {
-        id,
-        organizationId,
-        deletedAt: null,
-      },
-      data: {
-        deletedAt: new Date(),
+      select: {
+        botId: true,
       },
     });
   }
@@ -113,9 +111,11 @@ export class PlugsRepository {
         organizationId,
         identifier: data.identifier,
         active: data.active,
+        data: data.data || '[]',
       },
       update: {
         active: data.active,
+        data: data.data || '[]',
         updatedAt: new Date(),
         deletedAt: null, // In case it was soft deleted
       },
@@ -123,6 +123,7 @@ export class PlugsRepository {
         id: true,
         identifier: true,
         active: true,
+        data: true,
         createdAt: true,
         updatedAt: true,
       },

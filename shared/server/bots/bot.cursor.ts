@@ -13,6 +13,12 @@ import {
 } from '@growchief/shared-backend/bots/typing.tool';
 import { createPageWrapper } from '@growchief/shared-backend/bots/pausing.page';
 import { timer } from '@growchief/shared-both/utils/timer';
+import {
+  subjectsAi,
+  SubjectsInterface,
+} from '@growchief/shared-backend/plugs/ai/subjects.ai';
+import { commentAI } from '@growchief/shared-backend/plugs/ai/comment.ai';
+import { extractTextAi } from '@growchief/shared-backend/plugs/ai/extract.text.ai';
 
 const writer = new TypingTool();
 
@@ -244,6 +250,27 @@ export const createCursor = (params: {
     },
     endMouse() {
       return screenShare.next('stop');
+    },
+    ai: {
+      getAllowedSubjects: (
+        subjects: SubjectsInterface[],
+        positive: string,
+        negative: string,
+        isQuote?: boolean,
+      ) => {
+        return subjectsAi(subjects, positive, negative, isQuote);
+      },
+      comment: (
+        prompt: string,
+        text: string,
+        sentiment?: string,
+        isQuote?: boolean,
+      ) => {
+        return commentAI(prompt, text, sentiment, isQuote);
+      },
+      extract: (text: string) => {
+        return extractTextAi(text);
+      },
     },
     pause: () => {
       pauseSubject.next(true);

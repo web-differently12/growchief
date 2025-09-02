@@ -14,6 +14,7 @@ import { compareTwoStrings } from 'string-similarity';
 import { ProgressResponse } from '@growchief/shared-backend/temporal/progress.response';
 import { uniqBy } from 'lodash';
 import { Plug } from '@growchief/shared-backend/plugs/plug.decorator';
+import { generateComment } from '@growchief/shared-backend/plugs/ai/comment.ai';
 
 const list = [
   {
@@ -534,16 +535,63 @@ export class LinkedinProvider extends BotAbstract {
     randomSelectionChance: 1,
     variables: [
       {
+        type: 'input',
+        title: 'Positive',
+        defaultValue: '',
+        id: 'positive',
+        regex: /.*/,
+        placeholder: 'Things account should talk about',
+      },
+      {
+        type: 'input',
+        title: 'Negative',
+        defaultValue: '',
+        id: 'negative',
+        regex: /.*/,
+        placeholder: 'Things account should not talk about',
+      },
+      {
+        type: 'select',
+        title: 'Reply to connections',
+        defaultValue: '',
+        id: 'connection-type',
+        regex: /.*/,
+        placeholder: 'Connection type',
+        options: [
+          {
+            label: 'all',
+            value: 'All',
+          },
+          {
+            label: 'my-connections',
+            value: 'My Connections',
+          },
+          {
+            label: 'my-friends-connections',
+            value: 'My Friends Connections',
+          },
+          {
+            label: 'non-friends-connections',
+            value: 'Non Friends Connections',
+          },
+          {
+            label: 'people-i-follow',
+            value: 'People I follow',
+          },
+        ],
+      },
+      {
         type: 'textarea',
         title: 'System Prompt',
-        defaultValue: 'Example value',
-        regex: /.*/gm,
+        defaultValue: generateComment(),
+        regex: /.*/,
         id: 'system-prompt',
         placeholder: 'Enter the system prompt',
       },
     ],
   })
-  async plug() {
+  async likeAndComment() {
+    console.log('plug');
     return {
       endWorkflow: false,
       delay: 0,

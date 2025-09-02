@@ -22,6 +22,17 @@ interface Plug {
   description: string;
   title: string;
   randomSelectionChance: number;
+  variables: {
+    type: "input" | "textarea" | "number" | "boolean" | "select";
+    title: string;
+    defaultValue: string;
+    id: string;
+    placeholder: string;
+    regex: {
+      source: string;
+      flags: string;
+    };
+  }[];
 }
 
 export const RenderPlugs: FC<{ bot: Bot }> = ({ bot }) => {

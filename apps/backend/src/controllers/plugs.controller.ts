@@ -63,14 +63,6 @@ export class PlugsController {
     return this._plugsService.updatePlug(id, organization.id, data);
   }
 
-  @Delete('/:id')
-  async deletePlug(
-    @Param('id') id: string,
-    @GetOrganizationFromRequest() organization: Organization,
-  ) {
-    return this._plugsService.deletePlug(id, organization.id);
-  }
-
   @Get('/check/:botId/:identifier')
   async getPlugByBotAndIdentifier(
     @Param('botId') botId: string,

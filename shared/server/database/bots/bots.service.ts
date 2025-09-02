@@ -316,9 +316,10 @@ export class BotsService {
       label: b.label,
       plugins: (
         (Reflect.getMetadata('custom:plugin', b.constructor.prototype) ||
-          []) as Array<{ methodName: string } & PluginParams>
+          []) as Array<{ methodName: string; url: string } & PluginParams>
       ).map((p) => ({
         ...p,
+        url: b.initialPage,
         variables: p.variables.map((v) => ({
           ...v,
           regex: {

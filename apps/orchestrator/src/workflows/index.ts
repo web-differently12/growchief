@@ -4,3 +4,4 @@ export * from './workflow.throttle';
 export * from './workflow.bot.jobs';
 export * from './workflow.subscription.deactivate';
 export * from './workflow.email';
+export * from './workflow.plugs';

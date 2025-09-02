@@ -238,6 +238,7 @@ export class BotManager extends BotTools {
       leadId,
       proxyId,
       appendUrl,
+      ignoreLead,
     } = params;
 
     const botInformation = (await this._botService.getBot(bot)) || {
@@ -510,7 +511,7 @@ export class BotManager extends BotTools {
     }
 
     const lead =
-      functionName === 'login' || functionName === 'leadList' || appendUrl
+      functionName === 'login' || appendUrl || ignoreLead
         ? {}
         : await this.processLead(leadId, () => {
             return findProvider.processLead({
