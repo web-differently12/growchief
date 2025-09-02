@@ -15,6 +15,7 @@ import { WorkflowsController } from '@growchief/backend/controllers/workflows.co
 import { AnalyticsController } from '@growchief/backend/controllers/analytics.controller';
 import { LeadsController } from '@growchief/backend/controllers/leads.controller';
 import { ProxiesController } from '@growchief/backend/controllers/proxies.controller';
+import { PlugsController } from '@growchief/backend/controllers/plugs.controller';
 
 const authControllers = [
   UsersController,
@@ -27,6 +28,7 @@ const authControllers = [
   WorkflowsController,
   LeadsController,
   ProxiesController,
+  PlugsController,
 ];
 
 @Module({

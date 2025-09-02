@@ -13,6 +13,7 @@ import { extractConnectionTarget } from '@growchief/shared-backend/bots/provider
 import { compareTwoStrings } from 'string-similarity';
 import { ProgressResponse } from '@growchief/shared-backend/temporal/progress.response';
 import { uniqBy } from 'lodash';
+import { Plug } from '@growchief/shared-backend/plugs/plug.decorator';
 
 const list = [
   {
@@ -521,6 +522,21 @@ export class LinkedinProvider extends BotAbstract {
     return {
       endWorkflow: false,
       delay: this.delay,
+      repeatJob: false,
+    };
+  }
+
+  @Plug({
+    priority: 1,
+    identifier: 'like-and-comment-on-main-feed',
+    description: 'Like and comment on main feed',
+    title: 'Like and comment on main feed',
+    randomSelectionChance: 1,
+  })
+  async plug() {
+    return {
+      endWorkflow: false,
+      delay: 0,
       repeatJob: false,
     };
   }

@@ -309,6 +309,15 @@ export class BotsService {
     }));
   }
 
+  public getPlugins() {
+    return botList.map((b) => ({
+      identifier: b.identifier,
+      label: b.label,
+      plugins: (Reflect.getMetadata('custom:plugin', b.constructor.prototype) ||
+        []) as Array<{ methodName: string } & ToolParams>,
+    }));
+  }
+
   async saveActivity(
     leadId: string,
     organizationId: string,
@@ -329,6 +338,10 @@ export class BotsService {
 
   public getToolsByIdentifier(identifier: string) {
     return this.getTools().find((p) => p.identifier === identifier);
+  }
+
+  public getToolsPluginsByIdentifier(identifier: string) {
+    return this.getPlugins().find((p) => p.identifier === identifier)?.plugins!;
   }
 
   public async disableAll(organizationId: string) {

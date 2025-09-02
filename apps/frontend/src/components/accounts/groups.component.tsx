@@ -18,16 +18,16 @@ import { PlusIcon } from "@growchief/frontend/components/icons/plus.icon.tsx";
 import { useModals } from "@growchief/frontend/utils/store.ts";
 import { AddGroup } from "@growchief/frontend/components/accounts/add.group.component.tsx";
 
-export const Group: FC<{ group: BotGroup }> = ({ group }) => {
+export const Group: FC<{ group: BotGroup, path: string }> = ({ group, path }) => {
   const location = useLocation();
   const isActive = !!matchPath(
-    { path: ("/accounts/" + group.id) as string, end: false },
+    { path: (`/${path}/` + group.id) as string, end: false },
     location.pathname,
   );
 
   return (
     <Link
-      to={"/accounts/" + group.id}
+      to={`/${path}/` + group.id}
       className={clsx(
         "cursor-pointer flex items-center gap-[12px] group/profile hover:bg-boxHover rounded-e-[8px]",
         isActive && "bg-boxHover",
@@ -73,7 +73,7 @@ export const GroupsComponent: FC = () => {
           </div>
           <div className="flex flex-col gap-[8px]">
             {(data || []).map((group) => (
-              <Group group={group} key={group.id} />
+              <Group path="accounts" group={group} key={group.id} />
             ))}
           </div>
         </div>
