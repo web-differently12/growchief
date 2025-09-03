@@ -92,7 +92,7 @@ const WorkflowRow: FC<{
   const navigate = useNavigate();
   const decisionModal = useDecisionModal();
   const modals = useModals();
-  const [runningCount, setRunningCount] = React.useState(0);
+  const [_, setRunningCount] = React.useState(0);
 
   const handleClick = useCallback(() => {
     navigate(`/workflows/${workflow.id}`);
