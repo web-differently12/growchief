@@ -533,7 +533,7 @@ export class LinkedinProvider extends BotAbstract {
     priority: 1,
     identifier: 'like-and-comment-on-main-feed',
     description:
-      "Using a smart AI approach, we will give likes a craft great messages that don't look like AI",
+      "Using a smart AI approach, we will give likes and craft a great message that don't look like AI",
     title: 'Random likes and comments with AI',
     randomSelectionChance: 1,
     variables: [

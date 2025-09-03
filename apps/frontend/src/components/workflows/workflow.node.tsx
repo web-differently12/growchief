@@ -11,7 +11,7 @@ import { usePlatformsGroupsAndOptions } from "@growchief/frontend/components/wor
 import { Select } from "@growchief/frontend/components/ui/select.tsx";
 import { Button } from "@growchief/frontend/components/ui/button.tsx";
 import { useDecisionModal } from "@growchief/frontend/utils/use.decision.modal.tsx";
-import { useAccountsRequest } from "@growchief/frontend/requests/accounts.request.ts";
+import { useAccountsRequest, useGroupsAndBots } from "@growchief/frontend/requests/accounts.request.ts";
 import { useModals } from "@growchief/frontend/utils/store.ts";
 import { AddAccountComponent } from "@growchief/frontend/components/accounts/add.account.component.tsx";
 import { GroupContext } from "@growchief/frontend/context/group.context.tsx";
@@ -33,7 +33,7 @@ const Account: FC<SideMenuProps> = ({ nodeId }) => {
   const accounts = useGetAllAccounts();
   const accountsRequest = useAccountsRequest();
   const modals = useModals();
-  const { mutate } = accountsRequest.groupAndBots();
+  const { mutate } = useGroupsAndBots();
 
   // Handle both single group object and array of groups
   const availableGroups = groups!;

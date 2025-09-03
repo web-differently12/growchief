@@ -4,7 +4,7 @@ import {
   type Tools,
   useTools,
 } from "@growchief/frontend/requests/workflows.request.ts";
-import { useAccountsRequest } from "@growchief/frontend/requests/accounts.request.ts";
+import { useGroupsAndBots } from "@growchief/frontend/requests/accounts.request.ts";
 
 export const PlatformsGroupsAndOptions = createContext<{
   groups: Array<BotGroup & { bots: Bot[] }>;
@@ -14,8 +14,7 @@ export const PlatformsGroupsAndOptions = createContext<{
 export const PlatformsGroupsAndOptionsWrapper: FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const accounts = useAccountsRequest();
-  const { isLoading: loading1, data: accountsData } = accounts.groupAndBots();
+  const { isLoading: loading1, data: accountsData } = useGroupsAndBots();
   const { isLoading: loading2, data: toolsData } = useTools();
 
   if (loading1 || loading2) {

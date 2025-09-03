@@ -239,7 +239,7 @@ export class XProvider extends BotAbstract {
     priority: 20,
     identifier: 'upvote-and-comment-on-a-post-x',
     description:
-      "Using a smart AI approach, we will give likes a craft great messages that don't look like AI",
+      "Using a smart AI approach, we will give likes and craft a great message that don't look like AI",
     title: 'Random likes and comments with AI',
     randomSelectionChance: 1,
     variables: [

@@ -9,19 +9,15 @@ export const useStatus = (id: string) => {
     return (await fetch(`/bots/status/${id}`)).json();
   }, [fetch, id]);
 
-  return useSWR(`bot-status-${id}`, status, { 
+  return useSWR(`bot-status-${id}`, status, {
     refreshInterval: 30000, // Refresh every 30 seconds
     revalidateOnFocus: true,
-    revalidateOnReconnect: true 
+    revalidateOnReconnect: true,
   });
 };
 
 export const useAccountsRequest = () => {
   const fetch = useFetch();
-
-  const groupBots = useCallback(async () => {
-    return (await fetch("/bots/groups-bots")).json();
-  }, []);
 
   const groups = useCallback(async () => {
     return (await fetch("/bots/groups")).json();
@@ -101,12 +97,6 @@ export const useAccountsRequest = () => {
   }, []);
 
   return {
-    groupAndBots: () =>
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      useSWR<Array<BotGroup & { bots: Bot[] }>>(
-        "accounts-groups-bots",
-        groupBots,
-      ),
     // eslint-disable-next-line react-hooks/rules-of-hooks
     groups: () => useSWR<BotGroup[]>("accounts-groups", groups),
     canAddAccount,
@@ -120,4 +110,17 @@ export const useAccountsRequest = () => {
     assignProxy,
     removeProxy,
   };
+};
+
+export const useGroupsAndBots = () => {
+  const fetch = useFetch();
+
+  const groupBots = useCallback(async () => {
+    return (await fetch("/bots/groups-bots")).json();
+  }, []);
+
+  return useSWR<Array<BotGroup & { bots: Bot[] }>>(
+    "accounts-groups-bots",
+    groupBots,
+  );
 };

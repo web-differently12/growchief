@@ -91,10 +91,6 @@ const OnboardingRenderComponent: FC<{ close: () => void }> = ({ close }) => {
     }
   }, [workflowsRequest, navigate, close, toaster]);
 
-  const handleSkipToWorkflow = useCallback(() => {
-    setStep("create-workflow");
-  }, []);
-
   const handleFinishOnboarding = useCallback(() => {
     close();
     toaster.show(
@@ -176,26 +172,11 @@ const OnboardingRenderComponent: FC<{ close: () => void }> = ({ close }) => {
 
     return (
       <div className="max-w-[600px]">
-        <div className="pb-[20px] border-b border-background">
-          <h2 className="text-[18px] font-[600] text-primary mb-[8px]">
-            Add Your First Account
-          </h2>
-          <p className="text-[14px] text-secondary">
-            Connect your social media account to start automating. You can add
-            more accounts later.
-          </p>
-          <div className="flex gap-[12px] mt-[16px]">
-            <Button onClick={handleSkipToWorkflow} variant="outline" size="sm">
-              Skip This Step
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-[20px]">
+        <div>
           <GroupContext.Provider value={{ group: defaultGroup }}>
             <AddAccountComponent
-              close={handleAccountCreated}
-              mutate={() => {}}
+              close={() => {}}
+              mutate={handleAccountCreated}
             />
           </GroupContext.Provider>
         </div>
