@@ -85,6 +85,7 @@ const TextareaForm: FC<ComponentProps<"textarea"> & { label: string }> = ({
           className="above absolute break-words top-0 left-0 h-full w-full pointer-events-none whitespace-pre-wrap z-[3] text-[14px] px-[12px] py-[8px] border border-transparent"
         />
         <textarea
+          {...props}
           ref={(e) => {
             textareaRef.current = e;
             form.register(name as string).ref(e);
@@ -95,7 +96,6 @@ const TextareaForm: FC<ComponentProps<"textarea"> & { label: string }> = ({
               "!border-rose-500 focus:!border-rose-500 focus:!ring-rose-500/20",
             className,
           )}
-          {...props}
           name={name}
           onChange={form.register(name as string).onChange}
           onBlur={form.register(name as string).onBlur}
