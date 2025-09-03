@@ -89,6 +89,7 @@ export async function workflowPlugs({
 
     const throttler = getExternalWorkflowHandle(throttlerId);
 
+    let removeFromDelay = 0;
     try {
       await scope.run(async () => {
         await throttler.signal(enqueue, {
@@ -108,8 +109,9 @@ export async function workflowPlugs({
           appendUrl: '',
           ignoreLead: true,
         });
-
+        const startDelay = Date.now();
         await condition(() => triggerStepId === workflowIdInternal);
+        removeFromDelay = Date.now() - startDelay;
       });
     } catch (err) {
       console.log(err);
@@ -122,7 +124,7 @@ export async function workflowPlugs({
     const max = 60 * 60 * 1000; // 60 minutes in ms
     const randomMs = min + Math.floor(Math.random() * (max - min));
 
-    await sleep(randomMs);
+    await sleep(Math.max(0, randomMs - removeFromDelay));
     await continueAsNew({
       botId,
       orgId,
