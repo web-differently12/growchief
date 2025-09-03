@@ -18,7 +18,6 @@ import {
   organizationId,
 } from '@growchief/shared-backend/temporal/temporal.search.attribute';
 import { enqueue } from '@growchief/orchestrator/signals/enqueue.signal';
-import { makeId } from '@growchief/shared-both/utils/make.id';
 import { stepCompleted } from '@growchief/orchestrator/signals/step.completed.signal';
 import { cancelAll } from '@growchief/orchestrator/signals/cancel.all.signal';
 
@@ -89,7 +88,6 @@ export async function workflowPlugs({
 
     const throttler = getExternalWorkflowHandle(throttlerId);
 
-    let removeFromDelay = 0;
     try {
       await scope.run(async () => {
         await throttler.signal(enqueue, {
@@ -109,9 +107,8 @@ export async function workflowPlugs({
           appendUrl: '',
           ignoreLead: true,
         });
-        const startDelay = Date.now();
+
         await condition(() => triggerStepId === workflowIdInternal);
-        removeFromDelay = Date.now() - startDelay;
       });
     } catch (err) {
       console.log(err);
@@ -124,7 +121,7 @@ export async function workflowPlugs({
     const max = 60 * 60 * 1000; // 60 minutes in ms
     const randomMs = min + Math.floor(Math.random() * (max - min));
 
-    await sleep(Math.max(0, randomMs - removeFromDelay));
+    await sleep(randomMs);
     await continueAsNew({
       botId,
       orgId,

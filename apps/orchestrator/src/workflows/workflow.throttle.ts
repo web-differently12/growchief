@@ -374,6 +374,9 @@ export async function userWorkflowThrottler({
           job.workflowId,
         );
       } catch (error) {}
+    }
+
+    if (!repeatJob) {
       try {
         await getExternalWorkflowHandle(job.workflowInternalId).signal(
           stepCompleted,
