@@ -1,4 +1,5 @@
 import { type FC, useCallback } from "react";
+import React from "react";
 import {
   useWorkflows,
   useWorkflowsRequest,
@@ -10,6 +11,7 @@ import { PlusIcon } from "@growchief/frontend/components/icons/plus.icon.tsx";
 import { DeleteIcon } from "@growchief/frontend/components/icons/delete.icon.tsx";
 import { CodeIcon } from "@growchief/frontend/components/icons/code.icon.tsx";
 import { ImportIcon } from "@growchief/frontend/components/icons/import.icon.tsx";
+import { CloseIcon } from "@growchief/frontend/components/icons/close.icon.tsx";
 import { Button } from "@growchief/frontend/components/ui/button.tsx";
 import { useNavigate } from "react-router";
 import { useDecisionModal } from "@growchief/frontend/utils/use.decision.modal.tsx";
@@ -38,8 +40,21 @@ const StatusBadge: FC<{ active: boolean }> = ({ active }) => {
   );
 };
 
-const RunningWorkflowsCount: FC<{ workflowId: string }> = ({ workflowId }) => {
+const RunningWorkflowsCount: FC<{
+  workflowId: string;
+  workflowName: string;
+  onRunningCountChange?: (count: number) => void;
+  onCancelJobs?: (e: React.MouseEvent) => Promise<void>;
+}> = ({ workflowId, workflowName, onRunningCountChange, onCancelJobs }) => {
   const { data: runningData, isLoading } = useRunningWorkflows(workflowId);
+  const runningCount = runningData?.total ?? 0;
+
+  // Notify parent component of running count changes
+  React.useEffect(() => {
+    if (onRunningCountChange) {
+      onRunningCountChange(runningCount);
+    }
+  }, [runningCount, onRunningCountChange]);
 
   if (isLoading) {
     return (
@@ -50,7 +65,21 @@ const RunningWorkflowsCount: FC<{ workflowId: string }> = ({ workflowId }) => {
   }
 
   return (
-    <div className="text-[13px] text-secondary">{runningData?.total ?? 0}</div>
+    <div className="flex items-center gap-[8px]">
+      <div className="text-[13px] text-secondary">{runningCount}</div>
+      {runningCount > 0 && onCancelJobs && (
+        <button
+          {...createToolTip("Cancel running jobs")}
+          onClick={onCancelJobs}
+          className="flex items-center justify-center w-[20px] h-[20px] rounded-[4px] hover:bg-orange-600/20 transition-all duration-200 text-orange-400 hover:text-orange-300"
+          title={`Cancel ${runningCount} running jobs for ${workflowName}`}
+        >
+          <div className="w-[12px] h-[12px] flex items-center justify-center">
+            <CloseIcon />
+          </div>
+        </button>
+      )}
+    </div>
   );
 };
 
@@ -58,10 +87,12 @@ const WorkflowRow: FC<{
   workflow: Workflows;
   onDelete: (workflowId: string) => Promise<void>;
   onToggleActive: (workflowId: string, active: boolean) => Promise<void>;
-}> = ({ workflow, onDelete, onToggleActive }) => {
+  onCancelJobs: (workflowId: string) => Promise<void>;
+}> = ({ workflow, onDelete, onToggleActive, onCancelJobs }) => {
   const navigate = useNavigate();
   const decisionModal = useDecisionModal();
   const modals = useModals();
+  const [runningCount, setRunningCount] = React.useState(0);
 
   const handleClick = useCallback(() => {
     navigate(`/workflows/${workflow.id}`);
@@ -119,6 +150,24 @@ const WorkflowRow: FC<{
     [workflow.id, modals]
   );
 
+  const handleCancelJobs = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+
+      const confirmed = await decisionModal.open({
+        label: "Cancel Jobs",
+        description: `Are you sure you want to cancel all running jobs for "${workflow.name}"? This action cannot be undone.`,
+        approveLabel: "Cancel Jobs",
+        cancelLabel: "Keep Running",
+      });
+
+      if (confirmed) {
+        await onCancelJobs(workflow.id);
+      }
+    },
+    [workflow.id, workflow.name, decisionModal, onCancelJobs]
+  );
+
   return (
     <tr
       className="hover:bg-boxHover transition-all duration-200 border-b border-background cursor-pointer"
@@ -158,7 +207,12 @@ const WorkflowRow: FC<{
         <StatusBadge active={workflow.active} />
       </td>
       <td className="px-[20px] py-[16px]">
-        <RunningWorkflowsCount workflowId={workflow.id} />
+        <RunningWorkflowsCount
+          workflowId={workflow.id}
+          workflowName={workflow.name}
+          onRunningCountChange={setRunningCount}
+          onCancelJobs={handleCancelJobs}
+        />
       </td>
       <td className="px-[20px] py-[16px]">
         <div className="text-[13px] text-secondary">
@@ -245,6 +299,20 @@ export const WorkflowsComponent: FC = () => {
     [workflowsRequest, mutate, toaster]
   );
 
+  const cancelJobs = useCallback(
+    async (workflowId: string) => {
+      try {
+        await workflowsRequest.cancelJobs(workflowId);
+        await mutate(); // Refresh the list to update running counts
+        toaster.show("Jobs cancelled successfully", "success");
+      } catch (error) {
+        console.error("Failed to cancel jobs:", error);
+        toaster.show("Failed to cancel jobs", "warning");
+      }
+    },
+    [workflowsRequest, mutate, toaster]
+  );
+
   if (isLoading) {
     return null;
   }
@@ -293,6 +361,7 @@ export const WorkflowsComponent: FC = () => {
                 workflow={workflow}
                 onDelete={deleteWorkflow}
                 onToggleActive={toggleWorkflowActive}
+                onCancelJobs={cancelJobs}
               />
             ))}
           </tbody>

@@ -197,6 +197,16 @@ export const useWorkflowsRequest = () => {
     [fetch],
   );
 
+  const cancelJobs = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/workflows/${id}/cancel-jobs`, {
+        method: "POST",
+      });
+      return res.json();
+    },
+    [fetch],
+  );
+
   return {
     updateWorkflow,
     createWorkflow,
@@ -205,5 +215,6 @@ export const useWorkflowsRequest = () => {
     importURLList,
     uploadLeads,
     getRunningWorkflows,
+    cancelJobs,
   };
 };
