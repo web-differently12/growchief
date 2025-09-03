@@ -704,7 +704,7 @@ export class LinkedinProvider extends BotAbstract {
     const mapUntilSelected = getAllVisibleSelectors.map((p) => {
       return {
         id: p,
-        selected: p === selected.id,
+        selected: p === selected?.id,
         text: content.find((c) => c.id === p)?.text,
       };
     });
