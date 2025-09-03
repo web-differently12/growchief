@@ -28,7 +28,6 @@ import { TypedSearchAttributes } from '@temporalio/common';
 import { organizationId } from '@growchief/shared-backend/temporal/temporal.search.attribute';
 import { NotificationActivity } from '@growchief/orchestrator/activities/notification.activity';
 import { botJobsQueries } from '@growchief/orchestrator/queries/bot.jobs.queries';
-import { sortBy } from 'lodash';
 
 const PROGRESS_DEADLINE = 10 * 60 * 1000;
 
@@ -71,8 +70,29 @@ const { sendNotification } = proxyActivities<NotificationActivity>({
   startToCloseTimeout: '2 minutes',
 });
 
-const sortFunction = (queue: Work[]) => {
-  return sortBy(queue, ['priority', () => Math.random(), 'date']);
+const sortFunction = (items: Work[]) => {
+  // Assign one random weight per workflowId so comparisons are consistent
+  const weight = new Map();
+  for (const it of items) {
+    if (!weight.has(it.workflowId)) {
+      weight.set(it.workflowId, Math.random()); // one random number per workflowId
+    }
+  }
+
+  return (a: Work, b: Work) => {
+    // 1) priority asc
+    if (a.priority !== b.priority) return a.priority - b.priority;
+
+    // 2) random order by workflowId
+    const wa = weight.get(a.workflowId);
+    const wb = weight.get(b.workflowId);
+    if (wa !== wb) return wa - wb;
+
+    // 3) date asc
+    if (a.date !== b.date) return a.date - b.date;
+
+    return String(a.workflowId).localeCompare(String(b.workflowId));
+  };
 };
 
 export async function userWorkflowThrottler({
@@ -118,7 +138,7 @@ export async function userWorkflowThrottler({
   setHandler(enqueue, async (w) => {
     await lock.runExclusive(async () => {
       q.push(w);
-      q = sortFunction(q);
+      q.sort(sortFunction(q));
     });
   });
 
@@ -333,7 +353,7 @@ export async function userWorkflowThrottler({
       // Add the repeated job and re-sort the queue like in enqueue handler
       await lock.runExclusive(async () => {
         q.push(repeatedJob);
-        q = sortFunction(q);
+        q.sort(sortFunction(q));
       });
     }
 
