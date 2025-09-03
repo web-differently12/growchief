@@ -85,7 +85,7 @@ const sortFunction = (a: Work, b: Work, queue: Work[]) => {
   ).length;
 
   if (aWorkflowJobCount !== bWorkflowJobCount) {
-    return aWorkflowJobCount - bWorkflowJobCount;
+    return bWorkflowJobCount - aWorkflowJobCount;
   }
 
   // 3. Sort by date
