@@ -60,7 +60,7 @@ export async function workflowUploadLeads({
     url,
     stepId: 'leadList',
     nodeId: makeId(1000),
-    priority: 0,
+    priority: -1,
     leadId: 'ignore',
     totalRepeat: 0,
     ignoreLead: true,
