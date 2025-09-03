@@ -37,7 +37,7 @@ export class WorkflowsController {
     @Param('id') id: string,
     @GetOrganizationFromRequest() organization: Organization,
   ) {
-    return this._workflowsService.cancelWorkflows(id, organization.id);
+    return this._workflowsService.cancelJobs(id, organization.id);
   }
 
   @Post('/:id/upload-leads')

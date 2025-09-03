@@ -67,7 +67,7 @@ export class WorkflowsService {
     return this._workflowsRepository.getWorkflowsByOrganization(organizationId);
   }
 
-  async cancelWorkflows(workflowId: string, organizationId: string) {
+  async cancelJobs(workflowId: string, organizationId: string) {
     return this.deleteWorkflow(workflowId, organizationId, true);
   }
 
