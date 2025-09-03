@@ -28,6 +28,7 @@ import { TypedSearchAttributes } from '@temporalio/common';
 import { organizationId } from '@growchief/shared-backend/temporal/temporal.search.attribute';
 import { NotificationActivity } from '@growchief/orchestrator/activities/notification.activity';
 import { botJobsQueries } from '@growchief/orchestrator/queries/bot.jobs.queries';
+import { sortBy } from 'lodash';
 
 const PROGRESS_DEADLINE = 10 * 60 * 1000;
 
@@ -70,26 +71,8 @@ const { sendNotification } = proxyActivities<NotificationActivity>({
   startToCloseTimeout: '2 minutes',
 });
 
-const sortFunction = (a: Work, b: Work, queue: Work[]) => {
-  // 1. Sort by priority first
-  if (a.priority !== b.priority) {
-    return a.priority - b.priority;
-  }
-
-  // 2. Sort by workflow with least amount of jobs currently in queue
-  const aWorkflowJobCount = queue.filter(
-    (job) => job.workflowId === a.workflowId,
-  ).length;
-  const bWorkflowJobCount = queue.filter(
-    (job) => job.workflowId === b.workflowId,
-  ).length;
-
-  if (aWorkflowJobCount !== bWorkflowJobCount) {
-    return bWorkflowJobCount - aWorkflowJobCount;
-  }
-
-  // 3. Sort by date
-  return a.date - b.date;
+const sortFunction = (queue: Work[]) => {
+  return sortBy(queue, ['priority', () => Math.random(), 'date']);
 };
 
 export async function userWorkflowThrottler({
@@ -135,7 +118,7 @@ export async function userWorkflowThrottler({
   setHandler(enqueue, async (w) => {
     await lock.runExclusive(async () => {
       q.push(w);
-      q.sort((a, b) => sortFunction(a, b, q));
+      q = sortFunction(q);
     });
   });
 
@@ -350,7 +333,7 @@ export async function userWorkflowThrottler({
       // Add the repeated job and re-sort the queue like in enqueue handler
       await lock.runExclusive(async () => {
         q.push(repeatedJob);
-        q.sort((a, b) => sortFunction(a, b, q));
+        q = sortFunction(q);
       });
     }
 
