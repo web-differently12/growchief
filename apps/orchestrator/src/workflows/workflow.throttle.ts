@@ -101,7 +101,7 @@ export async function userWorkflowThrottler({
   nextAllowedAt?: number;
   logged?: boolean;
   active?: boolean;
-  q: Work[];
+  q?: Work[];
 }) {
   const GAP_MS = await getGap();
   let currentNextAllowedAt = nextAllowedAt;
