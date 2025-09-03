@@ -2,6 +2,7 @@ import { type FC, useCallback } from "react";
 import {
   useWorkflows,
   useWorkflowsRequest,
+  useRunningWorkflows,
 } from "@growchief/frontend/requests/workflows.request.ts";
 import type { Workflows } from "@prisma/client";
 import clsx from "clsx";
@@ -34,6 +35,22 @@ const StatusBadge: FC<{ active: boolean }> = ({ active }) => {
       />
       {active ? "Active" : "Inactive"}
     </div>
+  );
+};
+
+const RunningWorkflowsCount: FC<{ workflowId: string }> = ({ workflowId }) => {
+  const { data: runningData, isLoading } = useRunningWorkflows(workflowId);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">
+        <div className="w-[16px] h-[16px] border-2 border-secondary/30 border-t-secondary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-[13px] text-secondary">{runningData?.total ?? 0}</div>
   );
 };
 
@@ -139,6 +156,9 @@ const WorkflowRow: FC<{
       </td>
       <td className="px-[20px] py-[16px]">
         <StatusBadge active={workflow.active} />
+      </td>
+      <td className="px-[20px] py-[16px]">
+        <RunningWorkflowsCount workflowId={workflow.id} />
       </td>
       <td className="px-[20px] py-[16px]">
         <div className="text-[13px] text-secondary">
@@ -254,6 +274,9 @@ export const WorkflowsComponent: FC = () => {
               </th>
               <th className="px-[20px] py-[12px] text-left text-[12px] font-[600] text-secondary uppercase tracking-wide">
                 Status
+              </th>
+              <th className="px-[20px] py-[12px] text-left text-[12px] font-[600] text-secondary uppercase tracking-wide">
+                Running
               </th>
               <th className="px-[20px] py-[12px] text-left text-[12px] font-[600] text-secondary uppercase tracking-wide">
                 Created

@@ -43,6 +43,25 @@ export const useWorkflows = () => {
   return useSWR<Workflows[]>("workflows", fetcher);
 };
 
+export const useRunningWorkflows = (workflowId: string | undefined) => {
+  const fetch = useFetch();
+
+  const fetcher = useCallback(async () => {
+    if (!workflowId) return null;
+    return (await fetch(`/workflows/${workflowId}/running-workflows`)).json() as Promise<{ total: number }>;
+  }, [fetch, workflowId]);
+
+  const key = workflowId ? `running-workflows-${workflowId}` : null;
+
+  return useSWR<{ total: number } | null>(key, fetcher, {
+    refreshInterval: 30000, // Refresh every 30 seconds
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    refreshWhenHidden: false,
+    refreshWhenOffline: false,
+  });
+};
+
 export const useWorkflowById = (id: string | undefined) => {
   const fetch = useFetch();
   const [state] = useState(makeId(10));
@@ -170,6 +189,14 @@ export const useWorkflowsRequest = () => {
     [],
   );
 
+  const getRunningWorkflows = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/workflows/${id}/running-workflows`);
+      return res.json() as Promise<{ total: number }>;
+    },
+    [fetch],
+  );
+
   return {
     updateWorkflow,
     createWorkflow,
@@ -177,5 +204,6 @@ export const useWorkflowsRequest = () => {
     changeWorkflowActivity,
     importURLList,
     uploadLeads,
+    getRunningWorkflows,
   };
 };

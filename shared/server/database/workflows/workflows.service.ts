@@ -67,6 +67,32 @@ export class WorkflowsService {
     return this._workflowsRepository.getWorkflowsByOrganization(organizationId);
   }
 
+  async totalRunningWorkflows(workflowId: string, organizationId: string) {
+    const workflow = await this.getWorkflowAccounts(workflowId, organizationId);
+
+    const accounts =
+      workflow?.children?.flatMap((node) => {
+        const data = JSON.parse(node.data || '{}');
+        return data.account.id;
+      }) || [];
+
+    let total = 0;
+
+    for (const account of accounts) {
+      const workflows = this._temporal
+        .getClient()
+        .listWorkflows(
+          `WorkflowType="workflowBotJobs" AND botId="${account}" AND organizationId="${organizationId}" AND ExecutionStatus="Running"`,
+        );
+
+      for await (const _ of workflows) {
+        total++;
+      }
+    }
+
+    return { total };
+  }
+
   async uploadLeads(wid: string, orgId: string, body: UploadLeadsDto) {
     const { link, searchUrl } = body;
     const workflow = await this.getWorkflowAccounts(wid, orgId);

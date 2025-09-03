@@ -103,7 +103,7 @@ export async function workflowPlugs({
           url: tools.url,
           stepId: triggerStepId,
           nodeId: makeId(30),
-          priority: 0,
+          priority: -1,
           leadId: makeId(30),
           totalRepeat: 0,
           appendUrl: '',

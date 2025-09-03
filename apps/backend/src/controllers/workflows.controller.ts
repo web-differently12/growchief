@@ -24,6 +24,14 @@ export class WorkflowsController {
     return this._workflowsService.getWorkflows(organization.id);
   }
 
+  @Get('/:id/running-workflows')
+  async totalRunningWorkflows(
+    @Param('id') id: string,
+    @GetOrganizationFromRequest() organization: Organization,
+  ) {
+    return this._workflowsService.totalRunningWorkflows(id, organization.id);
+  }
+
   @Post('/:id/upload-leads')
   async uploadLeads(
     @Param('id') id: string,
