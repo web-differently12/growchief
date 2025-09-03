@@ -67,27 +67,20 @@ export class WorkflowsService {
     return this._workflowsRepository.getWorkflowsByOrganization(organizationId);
   }
 
+  async cancelWorkflows(workflowId: string, organizationId: string) {
+    return this.deleteWorkflow(workflowId, organizationId, true);
+  }
+
   async totalRunningWorkflows(workflowId: string, organizationId: string) {
-    const workflow = await this.getWorkflowAccounts(workflowId, organizationId);
-
-    const accounts =
-      workflow?.children?.flatMap((node) => {
-        const data = JSON.parse(node.data || '{}');
-        return data.account.id;
-      }) || [];
-
     let total = 0;
+    const workflows = this._temporal
+      .getClient()
+      .listWorkflows(
+        `WorkflowType="workflowBotJobs" AND workflowId="${workflowId}" AND organizationId="${organizationId}" AND ExecutionStatus="Running"`,
+      );
 
-    for (const account of accounts) {
-      const workflows = this._temporal
-        .getClient()
-        .listWorkflows(
-          `WorkflowType="workflowBotJobs" AND botId="${account}" AND organizationId="${organizationId}" AND ExecutionStatus="Running"`,
-        );
-
-      for await (const _ of workflows) {
-        total++;
-      }
+    for await (const _ of workflows) {
+      total++;
     }
 
     return { total };
@@ -310,17 +303,23 @@ export class WorkflowsService {
     return list;
   }
 
-  async deleteWorkflow(id: string, organizationId: string) {
+  async deleteWorkflow(
+    id: string,
+    organizationId: string,
+    preventDelete?: boolean,
+  ) {
     const botsNodes = await this._workflowsRepository.getWorkflowAccounts(id);
     const botIds =
       botsNodes?.children?.flatMap(
         (p) => (JSON.parse(p.data || '{}')?.account?.id as string) || [],
       ) || [];
 
-    const workflow = await this._workflowsRepository.deleteWorkflow(
-      id,
-      organizationId,
-    );
+    if (!preventDelete) {
+      await this._workflowsRepository.deleteWorkflow(
+        id,
+        organizationId,
+      );
+    }
 
     if (botIds.length) {
       for (const bot of botIds) {
@@ -369,7 +368,7 @@ export class WorkflowsService {
       }
     } catch (err) {}
 
-    return workflow;
+    return { deleted: true };
   }
 
   async getWorkflowsCount(organizationId: string) {

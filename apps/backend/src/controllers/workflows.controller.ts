@@ -32,6 +32,14 @@ export class WorkflowsController {
     return this._workflowsService.totalRunningWorkflows(id, organization.id);
   }
 
+  @Post('/:id/cancel-jobs')
+  async cancelJobs(
+    @Param('id') id: string,
+    @GetOrganizationFromRequest() organization: Organization,
+  ) {
+    return this._workflowsService.cancelWorkflows(id, organization.id);
+  }
+
   @Post('/:id/upload-leads')
   async uploadLeads(
     @Param('id') id: string,
