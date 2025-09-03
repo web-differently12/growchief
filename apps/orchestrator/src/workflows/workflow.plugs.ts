@@ -112,7 +112,9 @@ export async function workflowPlugs({
 
         await condition(() => step === triggerStepId);
       });
-    } catch (err) {}
+    } catch (err) {
+      console.log(err);
+    }
 
     // Random between 20 min (1200s) and 60 min (3600s)
     const min = 20 * 60 * 1000; // 20 minutes in ms
