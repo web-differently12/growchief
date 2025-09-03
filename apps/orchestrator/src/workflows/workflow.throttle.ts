@@ -94,15 +94,18 @@ const sortFunction = (a: Work, b: Work, queue: Work[]) => {
 
 export async function userWorkflowThrottler({
   nextAllowedAt = 0,
+  logged = true,
+  active = true,
+  q = [],
 }: {
   nextAllowedAt?: number;
+  logged?: boolean;
+  active?: boolean;
+  q: Work[];
 }) {
-  const q: Work[] = [];
   const GAP_MS = await getGap();
   let currentNextAllowedAt = nextAllowedAt;
   const lock = new Mutex();
-  let active = true;
-  let logged = true;
   let workingHoursManager: WorkingHoursManager | null = null;
 
   setHandler(botJobsQueries, () => {
@@ -376,11 +379,14 @@ export async function userWorkflowThrottler({
       } catch (error) {}
     }
 
-    // Continue as new when queue is empty to prevent history buildup
-    if (q.length === 0) {
-      await continueAsNew({
-        nextAllowedAt: currentNextAllowedAt,
-      });
-    }
+    // prevent race condition if there are
+    await sleep(1);
+
+    await continueAsNew({
+      nextAllowedAt: currentNextAllowedAt,
+      active,
+      logged,
+      q,
+    });
   }
 }
