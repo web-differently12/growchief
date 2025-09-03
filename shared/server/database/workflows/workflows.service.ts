@@ -315,10 +315,7 @@ export class WorkflowsService {
       ) || [];
 
     if (!preventDelete) {
-      await this._workflowsRepository.deleteWorkflow(
-        id,
-        organizationId,
-      );
+      await this._workflowsRepository.deleteWorkflow(id, organizationId);
     }
 
     if (botIds.length) {

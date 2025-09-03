@@ -70,10 +70,25 @@ const { sendNotification } = proxyActivities<NotificationActivity>({
   startToCloseTimeout: '2 minutes',
 });
 
-const sortFunction = (a: any, b: any) => {
+const sortFunction = (a: Work, b: Work, queue: Work[]) => {
+  // 1. Sort by priority first
   if (a.priority !== b.priority) {
     return a.priority - b.priority;
   }
+
+  // 2. Sort by workflow with least amount of jobs currently in queue
+  const aWorkflowJobCount = queue.filter(
+    (job) => job.workflowId === a.workflowId,
+  ).length;
+  const bWorkflowJobCount = queue.filter(
+    (job) => job.workflowId === b.workflowId,
+  ).length;
+
+  if (aWorkflowJobCount !== bWorkflowJobCount) {
+    return aWorkflowJobCount - bWorkflowJobCount;
+  }
+
+  // 3. Sort by date
   return a.date - b.date;
 };
 
@@ -117,7 +132,7 @@ export async function userWorkflowThrottler({
   setHandler(enqueue, async (w) => {
     await lock.runExclusive(async () => {
       q.push(w);
-      q.sort(sortFunction);
+      q.sort((a, b) => sortFunction(a, b, q));
     });
   });
 
@@ -332,7 +347,7 @@ export async function userWorkflowThrottler({
       // Add the repeated job and re-sort the queue like in enqueue handler
       await lock.runExclusive(async () => {
         q.push(repeatedJob);
-        q.sort(sortFunction);
+        q.sort((a, b) => sortFunction(a, b, q));
       });
     }
 
