@@ -34,7 +34,7 @@ export async function workflowPlugs({
   botId: string;
   orgId: string;
 }) {
-  let step: string;
+  let triggerStepId = '';
   let scope: CancellationScope;
   const throttlerId = `user-throttler-${botId}`;
 
@@ -59,7 +59,7 @@ export async function workflowPlugs({
   } catch (err) {}
 
   setHandler(stepCompleted, (stepId: string) => {
-    step = stepId;
+    triggerStepId = stepId;
   });
 
   setHandler(cancelAll, () => {
@@ -67,7 +67,7 @@ export async function workflowPlugs({
   });
 
   while (true) {
-    step = '';
+    triggerStepId = '';
     scope = new CancellationScope({ cancellable: true });
 
     const { workflowId: workflowIdInternal } = workflowInfo();
@@ -88,7 +88,6 @@ export async function workflowPlugs({
     }
 
     const throttler = getExternalWorkflowHandle(throttlerId);
-    const triggerStepId = makeId(20);
 
     try {
       await scope.run(async () => {
@@ -101,7 +100,7 @@ export async function workflowPlugs({
           payload: { settings: JSON.parse(randomPlug.data || '{}') },
           functionName: tools.methodName,
           url: tools.url,
-          stepId: triggerStepId,
+          stepId: workflowIdInternal,
           nodeId: makeId(30),
           priority: -1,
           leadId: makeId(30),
@@ -110,11 +109,13 @@ export async function workflowPlugs({
           ignoreLead: true,
         });
 
-        await condition(() => step === triggerStepId);
+        await condition(() => triggerStepId === workflowIdInternal);
       });
     } catch (err) {
       console.log(err);
     }
+
+    triggerStepId = '';
 
     // Random between 20 min (1200s) and 60 min (3600s)
     const min = 20 * 60 * 1000; // 20 minutes in ms
