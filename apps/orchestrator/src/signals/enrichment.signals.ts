@@ -7,6 +7,7 @@ export const addEnrichment = defineSignal<
     EnrichmentDto & {
       platform: string;
       internalWorkflowId: string;
+      organizationId: string;
       workflowId: string;
       stepId: string;
     },

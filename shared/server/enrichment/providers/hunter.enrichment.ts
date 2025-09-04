@@ -44,7 +44,6 @@ export class HunterEnrichment implements EnrichmentInterface {
 
     const value = await req.json();
 
-    console.log(value);
     if (
       !value?.data?.id ||
       !value?.data?.linkedin?.handle ||

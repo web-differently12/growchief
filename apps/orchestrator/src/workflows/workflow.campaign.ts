@@ -137,6 +137,7 @@ export async function workflowCampaign(args: {
         internalWorkflowId,
         stepId: node.identifier,
         workflowId: node.workflowId,
+        organizationId: args.orgId,
       });
 
       // waiting until we have the enrichment result
@@ -157,7 +158,8 @@ export async function workflowCampaign(args: {
         node.organizationId,
         node.workflowId,
         node.platform,
-        found.value.url,
+        args.body.email || '',
+        found.value,
       ))!;
 
       // starting the bot job for the found lead

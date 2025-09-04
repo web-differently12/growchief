@@ -84,6 +84,12 @@ export class SubscriptionRepository {
   }
 
   async getCredits(organizationId: string) {
+    if (!process.env.BILLING_PROVIDER) {
+      return {
+        monthlyCredits: 100,
+        used: 0,
+      };
+    }
     const getSubscription =
       (await this._subscription.model.subscription.findFirst({
         where: {
@@ -114,5 +120,17 @@ export class SubscriptionRepository {
       monthlyCredits: getSubscription.monthlyCredits,
       used: credits._sum.total || 0,
     };
+  }
+
+  async consumeCredits(organizationId: string, credits: number) {
+    if (!process.env.BILLING_PROVIDER) {
+      return;
+    }
+    return this._credits.model.credits.create({
+      data: {
+        organizationId,
+        total: credits,
+      },
+    });
   }
 }

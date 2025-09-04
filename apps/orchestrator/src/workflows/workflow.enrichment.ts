@@ -1,4 +1,3 @@
-import { providerList } from '@growchief/shared-backend/enrichment/provider.list';
 import { EnrichmentDto } from '@growchief/shared-both/dto/enrichment/enrichment.dto';
 import {
   condition,
@@ -16,11 +15,18 @@ import { makeId } from '@growchief/shared-both/utils/make.id';
 import { Mutex } from 'async-mutex';
 import { EnrichmentActivity } from '@growchief/orchestrator/activities/enrichment.activity';
 import { removeNodesFromQueueByWorkflowIdSignal } from '@growchief/orchestrator/signals/remove.nodes.from.queue.signal';
+import { WorkflowInformationActivity } from '@growchief/orchestrator/activities/workflow.information.activity';
 
 const { enrich, enrichments } = proxyActivities<EnrichmentActivity>({
   startToCloseTimeout: '1 minute',
   retry: { maximumAttempts: 3 },
 });
+
+const { getCredits, consumeCredits } =
+  proxyActivities<WorkflowInformationActivity>({
+    startToCloseTimeout: '1 minute',
+    retry: { maximumAttempts: 3 },
+  });
 
 export async function workflowEnrichment({
   queue = [],
@@ -30,6 +36,7 @@ export async function workflowEnrichment({
     EnrichmentDto & {
       workflowId: string;
       stepId: string;
+      organizationId: string;
       internalWorkflowId: string;
       platform: string;
       identifier: string;
@@ -122,6 +129,18 @@ export async function workflowEnrichment({
       (f) => !item.testedProviders.includes(f!.name),
     );
 
+    const credits = await getCredits(item.organizationId);
+    if (credits.monthlyCredits - credits.used === 0) {
+      await mutex.runExclusive(() => {
+        const itemIndex = queue.findIndex(
+          (q) => q.identifier === item.identifier,
+        );
+        queue.splice(itemIndex, 1);
+      });
+
+      continue;
+    }
+
     // try to enrich with each available provider that is not tested yet
     for (const provider of goOver
       .map((p) => enrichmentList.find((pl) => pl.name === p.name))
@@ -140,6 +159,10 @@ export async function workflowEnrichment({
             stepId: item.stepId,
             value,
           });
+
+          if (value) {
+            await consumeCredits(item.organizationId, 1);
+          }
         } catch (err) {}
 
         // removing the item from the queue
