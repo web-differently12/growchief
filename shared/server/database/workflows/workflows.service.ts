@@ -315,6 +315,14 @@ export class WorkflowsService {
       await this._workflowsRepository.deleteWorkflow(id, organizationId);
     }
 
+    try {
+      await (
+        await this._temporal.getClient().getWorkflowHandle('enrichment')
+      ).signal('removeNodesFromQueueByWorkflowIdSignal', id);
+    } catch (error) {
+      console.log(`Failed to remove jobs from queue`, error.message);
+    }
+
     if (botIds.length) {
       for (const bot of botIds) {
         try {

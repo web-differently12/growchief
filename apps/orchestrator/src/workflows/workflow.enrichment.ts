@@ -15,6 +15,7 @@ import {
 import { makeId } from '@growchief/shared-both/utils/make.id';
 import { Mutex } from 'async-mutex';
 import { EnrichmentActivity } from '@growchief/orchestrator/activities/enrichment.activity';
+import { removeNodesFromQueueByWorkflowIdSignal } from '@growchief/orchestrator/signals/remove.nodes.from.queue.signal';
 
 const { enrich, enrichments } = proxyActivities<EnrichmentActivity>({
   startToCloseTimeout: '1 minute',
@@ -27,6 +28,7 @@ export async function workflowEnrichment({
 }: {
   queue?: Array<
     EnrichmentDto & {
+      workflowId: string;
       stepId: string;
       internalWorkflowId: string;
       platform: string;
@@ -50,6 +52,21 @@ export async function workflowEnrichment({
   setHandler(addEnrichment, (item) => {
     mutex.runExclusive(() => {
       queue.push({ ...item, testedProviders: [], identifier: makeId(10) });
+    });
+  });
+
+  setHandler(removeNodesFromQueueByWorkflowIdSignal, async (w) => {
+    await mutex.runExclusive(async () => {
+      const indexes = queue.reduce((acc, item, index) => {
+        if (item.workflowId === w) {
+          acc.push(index);
+        }
+        return acc;
+      }, [] as number[]);
+
+      for (const index of indexes.reverse()) {
+        queue.splice(index, 1);
+      }
     });
   });
 
@@ -90,7 +107,10 @@ export async function workflowEnrichment({
         Math.min(...notAvailableProviders.map((l) => l.delay - Date.now())) +
         1000;
 
-      await condition(() => queue.length > queueLength, nextAvailableProvider);
+      await condition(
+        () => queue.length !== queueLength,
+        nextAvailableProvider,
+      );
       continue;
     }
 

@@ -136,6 +136,7 @@ export async function workflowCampaign(args: {
         platform: node.platform,
         internalWorkflowId,
         stepId: node.identifier,
+        workflowId: node.workflowId,
       });
 
       // waiting until we have the enrichment result
