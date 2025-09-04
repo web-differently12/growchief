@@ -11,4 +11,9 @@ export class EnrichmentActivity {
     const enrichProvider = providerList.find((p) => p.name === name)!;
     return enrichProvider.enrich(platform, value);
   }
+
+  @ActivityMethod()
+  async enrichments() {
+    return providerList.filter((f) => f.apiKey);
+  }
 }

@@ -8,8 +8,10 @@ export class RocketReachEnrichment implements EnrichmentInterface {
   name = 'Rocket Reach';
   priority = 1;
   supportedIdentifiers = ['linkedin'];
-  // @ts-ignore
-  apiKey: !!process.env.ROCKETREACH_API_KEY;
+
+  get apiKey() {
+    return process.env.ROCKETREACH_API_KEY;
+  }
 
   async enrich(
     platform: string,
@@ -40,7 +42,7 @@ export class RocketReachEnrichment implements EnrichmentInterface {
     const value = await req.json();
 
     if (req.status === 429) {
-      return { delay: value.wait };
+      return { delay: value.wait * 1000 };
     }
 
     if (!value?.id || !value.linkedin_url || platform !== 'linkedin') {

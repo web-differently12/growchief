@@ -7,9 +7,12 @@ export const addEnrichment = defineSignal<
     EnrichmentDto & {
       platform: string;
       internalWorkflowId: string;
+      stepId: string;
     },
   ]
 >('addEnrichment');
 
 export const finishedEnrichment =
-  defineSignal<[false | EnrichmentReturn]>('finishedEnrichment');
+  defineSignal<[{ stepId: string; value: EnrichmentReturn | false }]>(
+    'finishedEnrichment',
+  );
