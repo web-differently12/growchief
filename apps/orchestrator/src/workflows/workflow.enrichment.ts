@@ -4,6 +4,7 @@ import {
   condition,
   continueAsNew,
   getExternalWorkflowHandle,
+  proxyActivities,
   setHandler,
   sleep,
 } from '@temporalio/workflow';
@@ -13,8 +14,14 @@ import {
 } from '@growchief/orchestrator/signals/enrichment.signals';
 import { makeId } from '@growchief/shared-both/utils/make.id';
 import { Mutex } from 'async-mutex';
+import { EnrichmentActivity } from '@growchief/orchestrator/activities/enrichment.activity';
 
 const enrichmentList = providerList.filter((f) => f.apiKey);
+
+const { enrich } = proxyActivities<EnrichmentActivity>({
+  startToCloseTimeout: '1 minute',
+  retry: { maximumAttempts: 3 },
+});
 
 export async function workflowEnrichment({
   queue = [],
@@ -75,7 +82,7 @@ export async function workflowEnrichment({
     for (const provider of availableProviders
       .map((p) => enrichmentList.find((pl) => pl.name === p.name))
       .filter(Boolean)) {
-      const value = await provider?.enrich(item.platform, item);
+      const value = await enrich(provider?.name!, item.platform, item);
       if (value && 'url' in value) {
         await getExternalWorkflowHandle(item.internalWorkflowId).signal(
           finishedEnrichment,
