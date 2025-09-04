@@ -14,7 +14,7 @@ export class RocketReachEnrichment implements EnrichmentInterface {
   async enrich(
     platform: string,
     { email }: EnrichmentDto,
-  ): Promise<EnrichmentReturn | false> {
+  ): Promise<EnrichmentReturn | false | { delay: number }> {
     const listQuery = {
       ...(email ? { email } : {}),
     };
@@ -24,8 +24,9 @@ export class RocketReachEnrichment implements EnrichmentInterface {
     }
 
     const list = new URLSearchParams(listQuery).toString();
-    const value = await (
-      await fetch(`https://api.rocketreach.co/api/v2/person/lookup?${list}`, {
+    const req = await fetch(
+      `https://api.rocketreach.co/api/v2/person/lookup?${list}`,
+      {
         method: 'POST',
         headers: {
           accept: 'application/json',
@@ -33,8 +34,14 @@ export class RocketReachEnrichment implements EnrichmentInterface {
           'Content-Type': 'application/json',
           'x-api-key': process.env.ROCKETREACH_API_KEY!,
         },
-      })
-    ).json();
+      },
+    );
+
+    const value = await req.json();
+
+    if (req.status === 429) {
+      return { delay: value.wait };
+    }
 
     if (!value?.id || !value.linkedin_url || platform !== 'linkedin') {
       return false;

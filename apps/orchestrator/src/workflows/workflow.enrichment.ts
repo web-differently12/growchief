@@ -2,6 +2,7 @@ import { providerList } from '@growchief/shared-backend/enrichment/provider.list
 import { EnrichmentDto } from '@growchief/shared-both/dto/enrichment/enrichment.dto';
 import {
   condition,
+  continueAsNew,
   getExternalWorkflowHandle,
   setHandler,
   sleep,
@@ -71,13 +72,6 @@ export async function workflowEnrichment({
     }
 
     const item = availableQueues[0];
-    const itemIndex = queue.findIndex((q) => q.identifier === item.identifier);
-
-    // in case of some unique behavior
-    if (itemIndex === -1) {
-      continue;
-    }
-
     for (const provider of availableProviders
       .map((p) => enrichmentList.find((pl) => pl.name === p.name))
       .filter(Boolean)) {
@@ -87,7 +81,12 @@ export async function workflowEnrichment({
           finishedEnrichment,
           value,
         );
-        queue.splice(itemIndex, 1);
+        mutex.runExclusive(() => {
+          const itemIndex = queue.findIndex(
+            (q) => q.identifier === item.identifier,
+          );
+          queue.splice(itemIndex, 1);
+        });
         break;
       }
 
@@ -95,11 +94,16 @@ export async function workflowEnrichment({
         item.testedProviders.push(provider!.name);
       }
 
-      if (value && 'delay' in value) {
+      if (value && typeof value === 'object' && 'delay' in value) {
         limitsDelay[
           limitsDelay.findIndex((l) => l.name === provider!.name)
-        ].delay = +Date.now() + +value.delay;
+        ].delay = Date.now() + (value as { delay: number }).delay;
       }
     }
+
+    await continueAsNew({
+      queue,
+      limitsDelay,
+    });
   }
 }
