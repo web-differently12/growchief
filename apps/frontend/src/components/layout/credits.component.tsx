@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { useBillingRequest } from "@growchief/frontend/requests/billing.request.ts";
 import { useUser } from "@growchief/frontend/utils/store.ts";
+import { createToolTip } from "@growchief/frontend/utils/create.tool.tip.tsx";
 
 interface CreditsData {
   monthlyCredits: number;
@@ -25,20 +26,20 @@ export const CreditsComponentInner: FC = () => {
 
   const creditsData = credits as CreditsData;
   const remaining = Math.max(0, creditsData.monthlyCredits - creditsData.used);
-  const usagePercentage = Math.min(
+  const usagePercentage = 100 - Math.min(
     100,
     (creditsData.used / creditsData.monthlyCredits) * 100,
   );
 
   // Determine color based on usage
   const getProgressColor = () => {
-    if (usagePercentage >= 90) return "bg-red-500";
-    if (usagePercentage >= 75) return "bg-yellow-500";
-    return "bg-btn-primary";
+    if (usagePercentage >= 70) return "bg-btn-primary";
+    if (usagePercentage >= 40) return "bg-yellow-500";
+    if (usagePercentage >= 0) return "bg-red-500";
   };
 
   return (
-    <div className="flex items-center gap-[8px] text-secondary text-[12px] font-[500] select-none">
+    <div {...createToolTip('Remaining credits for enrichment')} className="flex items-center gap-[8px] text-secondary text-[12px] font-[500] select-none">
       {/* Credits text */}
       <span className="whitespace-nowrap">
         {remaining.toLocaleString()} /{" "}
