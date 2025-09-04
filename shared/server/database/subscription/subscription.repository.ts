@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaRepository } from '@growchief/shared-backend/database/prisma';
 import { Plans } from '@growchief/shared-both/billing/billing.interface';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class SubscriptionRepository {
   constructor(
     private _subscription: PrismaRepository<'subscription'>,
     private _organization: PrismaRepository<'organization'>,
+    private _credits: PrismaRepository<'credits'>,
   ) {}
 
   updateCustomerId(orgId: string, customerId: string) {
@@ -43,6 +45,7 @@ export class SubscriptionRepository {
         identifier: plan.identifier,
         organizationId: orgId,
         total: total || 1,
+        monthlyCredits: plan.credits * (total || 1),
       },
       update: {
         interval,
@@ -78,5 +81,38 @@ export class SubscriptionRepository {
         organizationId: orgId,
       },
     });
+  }
+
+  async getCredits(organizationId: string) {
+    const getSubscription =
+      (await this._subscription.model.subscription.findFirst({
+        where: {
+          organizationId,
+        },
+        select: {
+          monthlyCredits: true,
+          createdAt: true,
+        },
+      }))!;
+
+    const currentDate = dayjs(getSubscription.createdAt);
+    const monthsDistance = dayjs().diff(currentDate, 'month');
+    const checkCreditsFrom = currentDate.add(monthsDistance, 'month');
+    const credits = await this._credits.model.credits.aggregate({
+      where: {
+        organizationId,
+        createdAt: {
+          gte: checkCreditsFrom.toDate(),
+        },
+      },
+      _sum: {
+        total: true,
+      },
+    });
+
+    return {
+      monthlyCredits: getSubscription.monthlyCredits,
+      used: credits._sum.total || 0,
+    };
   }
 }
