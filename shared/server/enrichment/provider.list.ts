@@ -5,8 +5,8 @@ import { RocketReachEnrichment } from '@growchief/shared-backend/enrichment/prov
 import { HunterEnrichment } from '@growchief/shared-backend/enrichment/providers/hunter.enrichment';
 
 export const providerList = [
-  // new RocketReachEnrichment(),
-  // new ApolloEnrichment(),
-  // new DatagmaEnrichment(),
+  new RocketReachEnrichment(),
+  new ApolloEnrichment(),
+  new DatagmaEnrichment(),
   new HunterEnrichment(),
 ].sort((a, b) => a.priority - b.priority) as EnrichmentInterface[];
