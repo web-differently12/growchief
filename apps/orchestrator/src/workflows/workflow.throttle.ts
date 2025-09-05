@@ -393,7 +393,7 @@ export async function userWorkflowThrottler({
     await sleep(1);
 
     if (q.length === 0 || q.length === 50) {
-      await continueAsNew({
+      return continueAsNew({
         nextAllowedAt: currentNextAllowedAt,
         active,
         logged,
