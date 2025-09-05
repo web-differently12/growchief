@@ -158,46 +158,81 @@ export class LinkedinProvider extends BotAbstract {
   }
 
   async processLead(params: ParamsValue) {
-    const top = params.page.locator(
-      '[data-view-name="profile-top-card-verified-badge"]',
-    );
+    return await Promise.race<{
+      firstName: string;
+      lastName: string;
+      degree: number;
+      pending: boolean;
+      picture: string;
+    }>([
+      new Promise(async (res) => {
+        try {
+          const json = await (
+            await params.cursor.page.waitForResponse(
+              /a1a483e719b20537a256b6853cdca711/gm,
+              {
+                timeout: 0,
+              },
+            )
+          ).json();
 
-    await top.waitFor({
-      timeout: 0,
-    });
+          let picture = '';
+          try {
+            picture =
+              (await params.cursor.page
+                .locator('.pv-top-card-profile-picture__image--show')
+                .first()
+                .getAttribute('src')) || '';
+          } catch (err) {}
 
-    const picture = params.page.locator(
-      '[data-view-name="profile-top-card-member-photo"] img',
-    );
+          res({ ...extractConnectionTarget(json), picture });
+        } catch (err) {}
+      }),
+      new Promise(async (res) => {
+        try {
+          const top = params.page.locator(
+            '[data-view-name="profile-top-card-verified-badge"]',
+          );
 
-    let pending = false;
-    try {
-      await params.page.locator('#clock-small').first().waitFor({
-        timeout: 500,
-      });
-      pending = true;
-    } catch (err) {}
+          await top.waitFor({
+            timeout: 0,
+          });
 
-    const [firstName, ...lastName] = (
-      (await top.textContent())?.trim() || ''
-    ).split(' ');
-    const profile = (await picture.getAttribute('src')) || '';
-    const degreeSelector = params.page
-      .locator(
-        `[data-view-name="profile-top-card-verified-badge"] + div + p, [data-view-name="profile-top-card-verified-badge"] + p`,
-      )
-      .first();
+          const picture = params.page.locator(
+            '[data-view-name="profile-top-card-member-photo"] img',
+          );
 
-    const degree =
-      ((await degreeSelector.textContent()) || '').match(/\d+/)?.[0] || 1;
+          let pending = false;
+          try {
+            await params.page.locator('#clock-small').first().waitFor({
+              timeout: 500,
+            });
+            pending = true;
+          } catch (err) {}
 
-    return {
-      pending,
-      degree: Number(degree as string),
-      firstName: firstName || '',
-      lastName: lastName.join(' ') || '',
-      picture: profile || '',
-    };
+          const [firstName, ...lastName] = (
+            (await top.textContent())?.trim() || ''
+          ).split(' ');
+          const profile = (await picture.getAttribute('src')) || '';
+          const degreeSelector = params.page
+            .locator(
+              `[data-view-name="profile-top-card-verified-badge"] + div + p, [data-view-name="profile-top-card-verified-badge"] + p`,
+            )
+            .first();
+
+          const degree =
+            ((await degreeSelector.textContent()) || '').match(/\d+/)?.[0] || 1;
+
+          res({
+            pending,
+            degree: Number(degree as string),
+            firstName: firstName || '',
+            lastName: lastName.join(' ') || '',
+            picture: profile || '',
+          });
+        } catch (err) {}
+      }),
+    ]);
   }
 
   async login(params: {
@@ -263,36 +298,129 @@ export class LinkedinProvider extends BotAbstract {
       };
     }
 
-    const header = params.page
-      .locator(
-        '[data-view-name="profile-main-level"] [data-view-name^="edge-creation-"] svg',
-      )
-      .first();
+    const run = await Promise.race<boolean>([
+      // version 1
+      new Promise(async (res) => {
+        try {
+          const header = params.page
+            .locator('.top-card-background-hero-image + div .artdeco-button')
+            .first();
 
-    await header.waitFor({
-      state: 'visible',
-    });
+          await header.waitFor({
+            timeout: 0,
+          });
 
-    const connect = await params.page
-      .locator('[data-view-name="profile-main-level"] #connect-small')
-      .all();
+          const getMenus = (
+            await Promise.all(
+              (
+                await params.page
+                  .locator(
+                    '.top-card-background-hero-image + div .artdeco-button',
+                  )
+                  .all()
+              ).map(async (p, index) => {
+                return (await p.innerHTML()).toLowerCase().indexOf('connect') >
+                  -1
+                  ? index
+                  : false;
+              }),
+            )
+          ).find((p) => p !== false);
 
-    if (connect.length > 0) {
-      await params.cursor.click(connect[0]);
-    } else {
-      await params.cursor.click(
-        '[data-view-name="profile-main-level"] [data-view-name="profile-overflow-button"]',
-      );
+          if (typeof getMenus !== 'undefined') {
+            await params.cursor.click(
+              params.page
+                .locator(
+                  '.top-card-background-hero-image + div .artdeco-button',
+                )
+                .nth(getMenus),
+            );
+          } else {
+            await params.cursor.click(
+              '.top-card-background-hero-image + div .artdeco-dropdown',
+            );
 
-      const dropDown = params.page.locator(
-        '[data-floating-ui-portal] [data-view-name="edge-creation-connect-action"] a',
-      );
+            const dropDown = params.page.locator(
+              '.top-card-background-hero-image + div .artdeco-dropdown .artdeco-dropdown__content-inner',
+            );
 
-      await dropDown.waitFor({ state: 'visible' });
-      await timer(5000);
+            await dropDown.waitFor({ state: 'visible' });
 
-      await params.cursor.click(dropDown);
+            const getAllItems = (
+              await Promise.all(
+                (await dropDown.locator('li').all()).map(async (p, index) => {
+                  return (await p.innerHTML())
+                    .toLowerCase()
+                    .indexOf('connect') > -1
+                    ? index
+                    : false;
+                }),
+              )
+            ).find((p) => p !== false);
+
+            if (typeof getAllItems !== 'undefined') {
+              await params.cursor.click(
+                dropDown.locator('li').nth(getAllItems),
+              );
+            } else {
+              return res(false);
+            }
+            res(true);
+          }
+        } catch (err) {
+          return res(false);
+        }
+      }),
+      // version 2
+      new Promise(async (res) => {
+        try {
+          const header = params.page
+            .locator(
+              '[data-view-name="profile-main-level"] [data-view-name^="edge-creation-"] svg',
+            )
+            .first();
+
+          await header.waitFor({
+            state: 'visible',
+            timeout: 0,
+          });
+
+          const connect = await params.page
+            .locator('[data-view-name="profile-main-level"] #connect-small')
+            .all();
+
+          if (connect.length > 0) {
+            await params.cursor.click(connect[0]);
+          } else {
+            await params.cursor.click(
+              '[data-view-name="profile-main-level"] [data-view-name="profile-overflow-button"]',
+            );
+
+            const dropDown = params.page.locator(
+              '[data-floating-ui-portal] [data-view-name="edge-creation-connect-action"] a',
+            );
+
+            await dropDown.waitFor({ state: 'visible' });
+            await timer(5000);
+
+            await params.cursor.click(dropDown);
+          }
+
+          res(true);
+        } catch (err) {
+          res(false);
+        }
+      }),
+    ]);
+
+    if (!run) {
+      return {
+        delay: 0,
+        repeatJob: false,
+        endWorkflow: true,
+      };
     }
+
     const data = await params.cursor.getData();
 
     await params.page
@@ -381,24 +509,62 @@ export class LinkedinProvider extends BotAbstract {
 
     const data = await params.cursor.getData();
 
-    const header = params.page
-      .locator(
-        `[data-view-name="profile-main-level"] [data-view-name="profile-primary-message"]`,
-      )
-      .first();
+    const res = await Promise.race<boolean>([
+      new Promise<boolean>(async (res) => {
+        try {
+          const header = params.page
+            .locator(
+              '.top-card-background-hero-image + div .entry-point .artdeco-button',
+            )
+            .first();
 
-    await header.waitFor();
+          await header.waitFor({
+            timeout: 0,
+          });
 
-    const link = await header.getAttribute('href');
+          await params.cursor.click(header);
+          res(true);
+        } catch (err) {
+          res(false);
+        }
+      }),
+      new Promise<boolean>(async (res) => {
+        try {
+          const header = params.page
+            .locator(
+              `[data-view-name="profile-main-level"] [data-view-name="profile-primary-message"]`,
+            )
+            .first();
 
-    await params.page.goto(
-      link?.indexOf('linkedin.com') === -1
-        ? `https://www.linkedin.com${link}`
-        : link!,
-      {
-        timeout: 0,
-      },
-    );
+          await header.waitFor({
+            timeout: 0,
+          });
+
+          const link = await header.getAttribute('href');
+
+          await params.page.goto(
+            link?.indexOf('linkedin.com') === -1
+              ? `https://www.linkedin.com${link}`
+              : link!,
+            {
+              timeout: 0,
+            },
+          );
+
+          res(true);
+        } catch (err) {
+          res(false);
+        }
+      }),
+    ]);
+
+    if (!res) {
+      return {
+        delay: 0,
+        repeatJob: false,
+        endWorkflow: true,
+      };
+    }
 
     const convo = params.page
       .locator('.msg-convo-wrapper', {
