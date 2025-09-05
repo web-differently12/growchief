@@ -175,6 +175,7 @@ export class LinkedinProvider extends BotAbstract {
               },
             )
           ).json();
+          console.log('trying to get lead');
 
           let picture = '';
           try {
@@ -193,6 +194,8 @@ export class LinkedinProvider extends BotAbstract {
           const top = params.page.locator(
             '[data-view-name="profile-top-card-verified-badge"]',
           );
+
+          console.log('trying to get lead v2');
 
           await top.waitFor({
             timeout: 0,
@@ -641,6 +644,7 @@ export class LinkedinProvider extends BotAbstract {
     maxChildren: 1,
   })
   async visitProfile(params: ParamsValue) {
+    console.log('visiting profile');
     await timer(10000);
     return {
       endWorkflow: false,
