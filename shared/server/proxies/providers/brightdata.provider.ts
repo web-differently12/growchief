@@ -58,6 +58,17 @@ export class BrightDataProvider
     return 'brd.superproxy.io:33335';
   }
 
+  async whiteListIp(data: { zone: string }): Promise<any> {
+    const { ip } = await (
+      await fetch('https://api.ipify.org?format=json')
+    ).json();
+
+    return brightData.post('/zone/whitelist', {
+      ip,
+      zone: data.zone,
+    });
+  }
+
   async countryList(): Promise<{ identifier: string; label: string }[]> {
     const data = (await brightData.get<any>('/countrieslist')).data;
     return sortBy(

@@ -27,6 +27,7 @@ import { timer } from '@growchief/shared-both/utils/timer';
 import { ProgressResponse } from '@growchief/shared-backend/temporal/progress.response';
 import { LeadsService } from '@growchief/shared-backend/database/leads/leads.service';
 import { heartbeat } from '@temporalio/activity';
+import { proxyList } from '@growchief/shared-backend/proxies/proxy.list';
 
 const MAXIMUM_RUNNING_TIME = 300000;
 const MAXIMUM_PROCESS_TIME = 240000;
@@ -259,6 +260,18 @@ export class BotManager extends BotTools {
     const proxy = !proxyId
       ? false
       : (await this._botService.getProxy(organizationId, proxyId)) || false;
+
+    if (proxy && proxy.provider !== 'custom') {
+      const findProvider = proxyList.find(
+        (p) => p.identifier === proxy.provider,
+      );
+
+      if (findProvider?.whiteListIp) {
+        try {
+          await findProvider.whiteListIp(JSON.parse(proxy.data || '{}'));
+        } catch (err) {}
+      }
+    }
 
     if (
       functionName !== 'login' &&
