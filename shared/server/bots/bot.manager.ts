@@ -261,18 +261,6 @@ export class BotManager extends BotTools {
       ? false
       : (await this._botService.getProxy(organizationId, proxyId)) || false;
 
-    if (proxy && proxy.provider !== 'custom') {
-      const findProvider = proxyList.find(
-        (p) => p.identifier === proxy.provider,
-      );
-
-      if (findProvider?.whiteListIp) {
-        try {
-          await findProvider.whiteListIp(JSON.parse(proxy.data || '{}'));
-        } catch (err) {}
-      }
-    }
-
     if (
       functionName !== 'login' &&
       (botInformation.status === 'PAUSED' || !botInformation.logged)
@@ -528,8 +516,6 @@ export class BotManager extends BotTools {
       } catch (err) {}
     });
 
-    console.log('going to URL');
-
     // if we are not logged in, let's go to the page, but we don't have to wait for it to be fully loaded
     // This will lower the risk of getting stuck on the 1st step
     if (functionName !== 'login' && data) {
@@ -552,8 +538,6 @@ export class BotManager extends BotTools {
               data,
             } satisfies ExactParams);
           });
-
-    console.log('got lead');
 
     if (!lead && functionName !== 'login' && functionName !== 'leadList') {
       return {
