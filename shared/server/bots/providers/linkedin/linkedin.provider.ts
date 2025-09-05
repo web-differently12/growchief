@@ -167,15 +167,22 @@ export class LinkedinProvider extends BotAbstract {
     }>([
       new Promise(async (res) => {
         try {
-          const json = await (
-            await params.cursor.page.waitForResponse(
-              /a1a483e719b20537a256b6853cdca711/gm,
-              {
-                timeout: 0,
-              },
-            )
-          ).json();
-          console.log('trying to get lead');
+          console.log('trying to get lead 1');
+          const json = await new Promise<any>(async (resolve) => {
+            try {
+              params.page.on('response', async (response) => {
+                if (
+                  response.url().match(/a1a483e719b20537a256b6853cdca711/gm)
+                ) {
+                  resolve(await response.json());
+                }
+              });
+            } catch (err) {
+              resolve(false);
+            }
+          });
+
+          console.log('found lead 1');
 
           let picture = '';
           try {
@@ -191,15 +198,17 @@ export class LinkedinProvider extends BotAbstract {
       }),
       new Promise(async (res) => {
         try {
+          console.log('trying to get lead v2');
+
           const top = params.page.locator(
             '[data-view-name="profile-top-card-verified-badge"]',
           );
 
-          console.log('trying to get lead v2');
-
           await top.waitFor({
             timeout: 0,
           });
+
+          console.log('found lead v2');
 
           const picture = params.page.locator(
             '[data-view-name="profile-top-card-member-photo"] img',
