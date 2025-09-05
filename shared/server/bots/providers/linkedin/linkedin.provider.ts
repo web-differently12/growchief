@@ -158,31 +158,46 @@ export class LinkedinProvider extends BotAbstract {
   }
 
   async processLead(params: ParamsValue) {
-    const json = await (
-      await params.cursor.page.waitForResponse(
-        /a1a483e719b20537a256b6853cdca711/gm,
-        {
-          timeout: 0,
-        },
-      )
-    ).json();
+    const top = params.page.locator(
+      '[data-view-name="profile-top-card-verified-badge"]',
+    );
 
-    const person = extractConnectionTarget(json);
+    await top.waitFor({
+      timeout: 0,
+    });
 
-    if (!person) {
-      return false;
-    }
+    const picture = params.page.locator(
+      '[data-view-name="profile-top-card-member-photo"] img',
+    );
 
-    let picture = '';
+    let pending = false;
     try {
-      picture =
-        (await params.cursor.page
-          .locator('.pv-top-card-profile-picture__image--show')
-          .first()
-          .getAttribute('src')) || '';
+      await params.page.locator('#clock-small').first().waitFor({
+        timeout: 500,
+      });
+      pending = true;
     } catch (err) {}
 
-    return { ...person, picture };
+    const [firstName, ...lastName] = (
+      (await top.textContent())?.trim() || ''
+    ).split(' ');
+    const profile = (await picture.getAttribute('src')) || '';
+    const degreeSelector = params.page
+      .locator(
+        `[data-view-name="profile-top-card-verified-badge"] + div + p, [data-view-name="profile-top-card-verified-badge"] + p`,
+      )
+      .first();
+
+    const degree =
+      ((await degreeSelector.textContent()) || '').match(/\d+/)?.[0] || 1;
+
+    return {
+      pending,
+      degree: Number(degree as string),
+      firstName: firstName || '',
+      lastName: lastName.join(' ') || '',
+      picture: profile || '',
+    };
   }
 
   async login(params: {
@@ -240,7 +255,7 @@ export class LinkedinProvider extends BotAbstract {
     weeklyLimit: 100,
   })
   async connectionRequest(params: ParamsValue, lead: RunEnrichment) {
-    if (lead.degree === 1) {
+    if (lead.degree === 1 || lead.pending) {
       return {
         delay: 0,
         repeatJob: false,
@@ -249,61 +264,34 @@ export class LinkedinProvider extends BotAbstract {
     }
 
     const header = params.page
-      .locator('.top-card-background-hero-image + div .artdeco-button')
+      .locator(
+        '[data-view-name="profile-main-level"] [data-view-name^="edge-creation-"] svg',
+      )
       .first();
 
-    await header.waitFor();
+    await header.waitFor({
+      state: 'visible',
+    });
 
-    const getMenus = (
-      await Promise.all(
-        (
-          await params.page
-            .locator('.top-card-background-hero-image + div .artdeco-button')
-            .all()
-        ).map(async (p, index) => {
-          return (await p.innerHTML()).toLowerCase().indexOf('connect') > -1
-            ? index
-            : false;
-        }),
-      )
-    ).find((p) => p !== false);
+    const connect = await params.page
+      .locator('[data-view-name="profile-main-level"] #connect-small')
+      .all();
 
-    if (typeof getMenus !== 'undefined') {
-      await params.cursor.click(
-        params.page
-          .locator('.top-card-background-hero-image + div .artdeco-button')
-          .nth(getMenus),
-      );
+    if (connect.length > 0) {
+      await params.cursor.click(connect[0]);
     } else {
       await params.cursor.click(
-        '.top-card-background-hero-image + div .artdeco-dropdown',
+        '[data-view-name="profile-main-level"] [data-view-name="profile-overflow-button"]',
       );
 
       const dropDown = params.page.locator(
-        '.top-card-background-hero-image + div .artdeco-dropdown .artdeco-dropdown__content-inner',
+        '[data-floating-ui-portal] [data-view-name="edge-creation-connect-action"] a',
       );
 
       await dropDown.waitFor({ state: 'visible' });
+      await timer(5000);
 
-      const getAllItems = (
-        await Promise.all(
-          (await dropDown.locator('li').all()).map(async (p, index) => {
-            return (await p.innerHTML()).toLowerCase().indexOf('connect') > -1
-              ? index
-              : false;
-          }),
-        )
-      ).find((p) => p !== false);
-
-      if (typeof getAllItems !== 'undefined') {
-        await params.cursor.click(dropDown.locator('li').nth(getAllItems));
-      } else {
-        return {
-          delay: 0,
-          repeatJob: false,
-          endWorkflow: true,
-        };
-      }
+      await params.cursor.click(dropDown);
     }
     const data = await params.cursor.getData();
 
@@ -395,13 +383,22 @@ export class LinkedinProvider extends BotAbstract {
 
     const header = params.page
       .locator(
-        '.top-card-background-hero-image + div .entry-point .artdeco-button',
+        `[data-view-name="profile-main-level"] [data-view-name="profile-primary-message"]`,
       )
       .first();
 
     await header.waitFor();
 
-    await params.cursor.click(header);
+    const link = await header.getAttribute('href');
+
+    await params.page.goto(
+      link?.indexOf('linkedin.com') === -1
+        ? `https://www.linkedin.com${link}`
+        : link!,
+      {
+        timeout: 0,
+      },
+    );
 
     const convo = params.page
       .locator('.msg-convo-wrapper', {
@@ -415,7 +412,9 @@ export class LinkedinProvider extends BotAbstract {
 
     try {
       const getAllMessages = convo.locator('.msg-s-event-listitem__body');
-      await getAllMessages.first().waitFor();
+      await getAllMessages.first().waitFor({
+        timeout: 10000,
+      });
 
       allMessagesContent = (await getAllMessages.allInnerTexts()).map((p) =>
         p.trim(),
