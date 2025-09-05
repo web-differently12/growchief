@@ -167,7 +167,6 @@ export class LinkedinProvider extends BotAbstract {
     }>([
       new Promise(async (res) => {
         try {
-          console.log('trying to get lead 1');
           const json = await new Promise<any>(async (resolve) => {
             try {
               params.page.on('response', async (response) => {
@@ -181,8 +180,6 @@ export class LinkedinProvider extends BotAbstract {
               resolve(false);
             }
           });
-
-          console.log('found lead 1');
 
           let picture = '';
           try {
@@ -198,8 +195,6 @@ export class LinkedinProvider extends BotAbstract {
       }),
       new Promise(async (res) => {
         try {
-          console.log('trying to get lead v2');
-
           const top = params.page.locator(
             '[data-view-name="profile-top-card-verified-badge"]',
           );
@@ -207,8 +202,6 @@ export class LinkedinProvider extends BotAbstract {
           await top.waitFor({
             timeout: 0,
           });
-
-          console.log('found lead v2');
 
           const picture = params.page.locator(
             '[data-view-name="profile-top-card-member-photo"] img',
@@ -653,7 +646,6 @@ export class LinkedinProvider extends BotAbstract {
     maxChildren: 1,
   })
   async visitProfile(params: ParamsValue) {
-    console.log('visiting profile');
     await timer(10000);
     return {
       endWorkflow: false,
