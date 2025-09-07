@@ -340,6 +340,7 @@ export class LinkedinProvider extends BotAbstract {
                 )
                 .nth(getMenus),
             );
+            res(true);
           } else {
             await params.cursor.click(
               '.top-card-background-hero-image + div .artdeco-dropdown',
