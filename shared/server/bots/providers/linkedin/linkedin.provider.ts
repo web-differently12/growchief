@@ -373,6 +373,7 @@ export class LinkedinProvider extends BotAbstract {
             res(true);
           }
         } catch (err) {
+          console.log(err);
           return res(false);
         }
       }),
